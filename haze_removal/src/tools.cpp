@@ -109,3 +109,24 @@ void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat& t,
 	}
     }
 }
+
+
+void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& dst, const cv::Mat& t,
+	const cv::Vec3b A, const float t0)
+{
+    CV_Assert(t.type() == CV_32F);
+    cv::Vec3f Af(A[0], A[1], A[2]);
+
+    dst.create(src.size());
+    for(int i = 0; i != src.rows; ++i)
+    {
+	for(int j = 0; j != src.cols; ++j)
+	{
+	    float r = t.at<float>(i, j) > t0 ? t.at<float>(i, j) : t0;
+
+	    dst(i, j)[0] = (src(i, j)[0] - Af[0])/r + A[0];
+	    dst(i, j)[1] = (src(i, j)[1] - Af[1])/r + A[1];
+	    dst(i, j)[2] = (src(i, j)[2] - Af[2])/r + A[2];
+	}
+    }
+}

@@ -8,10 +8,15 @@
 /** @brief Calculate Dark Channel*/
 void calcDarkChannel(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<uchar>& dst, const int s = 15);
 
-/** @brief estimate Atmospheric Light */
+/** @brief Estimate Atmospheric Light */
 void estimateAtmosphericLight(const cv::Mat_<cv::Vec3b>& src, const cv::Mat_<uchar>& dark_channel, cv::Vec3b& A);
 
 /** @brief Estimate Initial Transmission Map*/
 void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat& t, const int s = 15, const float om = 0.95);
+
+/** @brief Recover the Scene Radiance*/
+void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& dst, const cv::Mat& t,
+	const cv::Vec3b A, const float t0 = 0.1);
+
 
 #endif
