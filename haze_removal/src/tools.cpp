@@ -154,11 +154,12 @@ void linearEquationSolver(const cv::Mat_<float>& A, const cv::Mat_<float>& b, cv
 		cv::Mat_<float> pre_X = X.clone();
 		for(int i = 0; i != X.rows; ++i)
 		{
+			CV_Assert(A(i, i) == 0.0f);
 			X(i, 0) = 0;
 			for(int j = 0; j != X.rows; ++j)
 			{
 				if(i == j) continue;
-				X(i, 0) = A(i, j)*X(j, 0);
+				X(i, 0) += A(i, j)*X(j, 0);
 			}
 			
 			X(i, 0) = (1/A(i, i)*(b(i, 0) - X(i, 0)))*omega + (1 - omega)*pre_X(i, 0);

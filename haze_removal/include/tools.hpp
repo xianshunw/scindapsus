@@ -20,7 +20,7 @@ void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& d
 	
 /** @brief Solver Linear Equations*/
 void linearEquationSolver(const cv::Mat_<float>& A, const cv::Mat_<float>& b, cv::Mat_<float>& X,
-    const float omega = 0.5, const float T = 10e-4, unsigned int N = 10e6);
+    const float omega = 0.5, const float T = 10e-6, unsigned int N = 10e6);
 
 
 #endif
