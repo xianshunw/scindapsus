@@ -27,20 +27,16 @@ int main(int argc, char* argv[])
     cv::minMaxIdx(t, &min_value, &max_value);
     t.convertTo(t_show, CV_8U, 255.0/(max_value-min_value), 255.0*min_value/(max_value- min_value));
     
-    /*
     cv::Mat_<cv::Vec3b> recoverImg;
-    recoverSceneRadiance(img, t, A, recoverImg);
-   */ 
+    recoverSceneRadiance(img, recoverImg, t, A);
+
     cv::namedWindow("source img");
     cv::imshow("source img", img);
     cv::namedWindow("dark_channel");
     cv::imshow("dark_channel", dark_channel);
     cv::namedWindow("transmission");
     cv::imshow("transmission", t_show);
-
-    /*
     cv::namedWindow("recoverImg");
     cv::imshow("recoverImg", recoverImg);
-    */
     cv::waitKey();
 }
