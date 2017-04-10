@@ -30,6 +30,7 @@ int main(int argc, char* argv[])
     cv::Mat_<cv::Vec3b> recoverImg;
     recoverSceneRadiance(img, recoverImg, t, A);
 
+
     cv::namedWindow("source img");
     cv::imshow("source img", img);
     cv::namedWindow("dark_channel");
@@ -39,4 +40,19 @@ int main(int argc, char* argv[])
     cv::namedWindow("recoverImg");
     cv::imshow("recoverImg", recoverImg);
     cv::waitKey();
+
+    cv::Mat_<float> CoeffMat(3, 3);
+    CoeffMat(0, 0) = 2; CoeffMat(0, 1) = 1; CoeffMat(0, 2) = 0;
+    CoeffMat(1, 0) = 0; CoeffMat(1, 1) = 1; CoeffMat(1, 2) = 1;
+    CoeffMat(2, 0) = 1; CoeffMat(2, 1) = 0; CoeffMat(2, 2) = 2;
+
+    cv::Mat_<float> b(3, 1);
+    b(0, 0) = 4; b(1, 0) = 1.5; b(2, 0) = 2.5;
+
+    cv::Mat_<float> X;
+    linearEquationSolver(CoeffMat, b, X);
+
+    std::cout << CoeffMat << std::endl;
+    std::cout << b << std::endl;
+    std::cout << X << std::endl;
 }
