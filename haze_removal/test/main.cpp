@@ -4,6 +4,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv/cv.hpp>
+#include <iostream>
 
 int main(int argc, char* argv[])
 {
@@ -17,7 +18,6 @@ int main(int argc, char* argv[])
     cv::Mat_<uchar> dark_channel;
     calcDarkChannel(img, dark_channel);
 
-    /*
     cv::Vec3b A;
     estimateAtmosphericLight(img, dark_channel, A);
 
@@ -27,17 +27,20 @@ int main(int argc, char* argv[])
     cv::minMaxIdx(t, &min_value, &max_value);
     t.convertTo(t_show, CV_8U, 255.0/(max_value-min_value), 255.0*min_value/(max_value- min_value));
     
+    /*
     cv::Mat_<cv::Vec3b> recoverImg;
     recoverSceneRadiance(img, t, A, recoverImg);
-    
+   */ 
     cv::namedWindow("source img");
     cv::imshow("source img", img);
     cv::namedWindow("dark_channel");
     cv::imshow("dark_channel", dark_channel);
     cv::namedWindow("transmission");
     cv::imshow("transmission", t_show);
+
+    /*
     cv::namedWindow("recoverImg");
     cv::imshow("recoverImg", recoverImg);
-    cv::waitKey();
     */
+    cv::waitKey();
 }
