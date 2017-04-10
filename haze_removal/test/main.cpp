@@ -1,7 +1,8 @@
 #include "tools.hpp"
 #include <string>
 #include <opencv2/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 #include <opencv/cv.hpp>
 
 int main(int argc, char* argv[])
@@ -14,8 +15,9 @@ int main(int argc, char* argv[])
 
     cv::Mat img = cv::imread(image_name, 1);
     cv::Mat_<uchar> dark_channel;
-    computeDarkChannel(img, dark_channel);
+    calcDarkChannel(img, dark_channel);
 
+    /*
     cv::Vec3b A;
     estimateAtmosphericLight(img, dark_channel, A);
 
@@ -37,4 +39,5 @@ int main(int argc, char* argv[])
     cv::namedWindow("recoverImg");
     cv::imshow("recoverImg", recoverImg);
     cv::waitKey();
+    */
 }
