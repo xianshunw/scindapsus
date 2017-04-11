@@ -4,6 +4,7 @@
 #include <limits>
 #include <random>
 #include <ctime>
+#include <iostream>
 
 void calcDarkChannel(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<uchar>& dst, const int s)
 {
@@ -133,12 +134,38 @@ void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& d
     }
 }
 
-void linearEquationSolver(const cv::Mat_<float>& A, const cv::Mat_<float>& b, cv::Mat_<float>& X,
+void linearEquationSolver(cv::Mat_<float>& A, cv::Mat_<float>& b, cv::Mat_<float>& X,
     const float omega, const float T, unsigned int N)
 {
 	CV_Assert(b.cols == 1);
 	CV_Assert(A.rows == b.rows);
 	CV_Assert(A.cols == A.rows);
+
+	//row elementary operation
+	bool flag = true;
+	for(int i = 0; i != A.rows; ++i)
+	{
+		if(A(i, i) == 0.0f)
+		{
+			flag = false;
+			for(int j = 0; j != A.cols; ++j)
+			{
+				if(i == j) continue;
+				if(A(i, j) != 0.0f&&A(j, i) != 0.0f)
+				{
+					cv::Mat t;
+					A.row(i).copyTo(t); A.row(j).copyTo(A.row(i));
+					t.copyTo(A.row(j));
+					b.row(i).copyTo(t); b.row(j).copyTo(b.row(i));
+					t.copyTo(b.row(j));
+
+					flag = true;
+					break;
+				}
+			}
+		}
+	}
+	CV_Assert(flag);
 	
 	X.create(b.size());
 	
@@ -154,7 +181,7 @@ void linearEquationSolver(const cv::Mat_<float>& A, const cv::Mat_<float>& b, cv
 		cv::Mat_<float> pre_X = X.clone();
 		for(int i = 0; i != X.rows; ++i)
 		{
-			CV_Assert(A(i, i) == 0.0f);
+			CV_Assert(A(i, i) != 0.0f);
 			X(i, 0) = 0;
 			for(int j = 0; j != X.rows; ++j)
 			{
@@ -165,8 +192,56 @@ void linearEquationSolver(const cv::Mat_<float>& A, const cv::Mat_<float>& b, cv
 			X(i, 0) = (1/A(i, i)*(b(i, 0) - X(i, 0)))*omega + (1 - omega)*pre_X(i, 0);
 		}
 		
-		double min_value;
-		cv::minMaxIdx(cv::abs(pre_X - X), &min_value);
-		if (min_value <= T) break;
+		double max_value;
+		cv::minMaxIdx(cv::abs(pre_X - X), 0, &max_value);
+		if (max_value <= T) break;
+	}
+}
+
+void meanAndCovariance(const cv::Mat_<cv::Vec3b>& win, cv::Vec3f& m, cv::Mat_<float>& c)
+{
+	int N = win.rows*win.cols;
+
+	cv::Mat_<float> bgrMat(N, 3);
+	for(int i = 0; i != win.rows; ++i)
+	{
+		for(int j = 0; j != win.cols; ++j)
+		{
+			bgrMat(i*win.rows + j, 0) = win(i, j)[0];
+			bgrMat(i*win.rows + j, 1) = win(i, j)[1];
+			bgrMat(i*win.rows + j, 2) = win(i, j)[2];
+
+			m[0] += win(i, j)[0];
+			m[1] += win(i, j)[1];
+			m[2] += win(i, j)[2];
+		}
+	}
+	m[0] /= N; m[1] /= N; m[2] /= N;
+
+	c.create(3, 3);
+	for(int i = 0; i != c.rows; ++i)
+	{
+		for(int j = i; j != c.cols; ++j)
+		{
+			c(i, j) = (bgrMat.col(i) - m[i]).dot(bgrMat.col(j) - m[j]);
+			c(j, i) = c(i, j);
+		}
+	}
+
+}
+
+
+void softMatting(const cv::Mat_<cv::Vec3b>& src, const cv::Mat& t_hat, cv::Mat& t_refine,
+    const float lambda, const int w)
+{
+	unsigned int N = src.rows*src.cols;
+	cv::Mat_<float> L(N, N);
+
+	for(int i = 0; i != N; ++i)
+	{
+		for(int j = 0; j != N; ++j)
+		{
+			
+		}
 	}
 }
