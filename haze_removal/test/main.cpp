@@ -21,11 +21,14 @@ int main(int argc, char* argv[])
     cv::Vec3b A;
     estimateAtmosphericLight(img, dark_channel, A);
 
-    cv::Mat t, t_show;
+    cv::Mat_<float> t, t_refine; cv::Mat t_show;
     double min_value, max_value;
     initTransMap(img, A, t);
+    cv::Mat tMat = t;
     cv::minMaxIdx(t, &min_value, &max_value);
-    t.convertTo(t_show, CV_8U, 255.0/(max_value-min_value), 255.0*min_value/(max_value- min_value));
+    tMat.convertTo(t_show, CV_8U, 255.0/(max_value-min_value), 255.0*min_value/(max_value- min_value));
+
+    softMatting(img, t, t_refine);
     
     cv::Mat_<cv::Vec3b> recoverImg;
     recoverSceneRadiance(img, recoverImg, t, A);
@@ -40,4 +43,5 @@ int main(int argc, char* argv[])
     cv::namedWindow("recoverImg");
     cv::imshow("recoverImg", recoverImg);
     cv::waitKey();
+
 }
