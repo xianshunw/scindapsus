@@ -4,7 +4,7 @@
 #include <limits>
 #include <random>
 #include <ctime>
-#include <iostream>
+#include <cmath>
 
 void calcDarkChannel(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<uchar>& dst, const int s)
 {
@@ -84,9 +84,9 @@ void estimateAtmosphericLight(const cv::Mat_<cv::Vec3b>& src, const cv::Mat_<uch
     }
 }
 
-void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat& t, const int s, const float om)
+void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat_<float>& t, const int s, const float om)
 {
-    t.create(src.size(), CV_32F);
+    t.create(src.size());
     cv::Vec3f Af(A[0], A[1], A[2]);
 
     for(int i = 0; i != src.rows; ++i)
@@ -108,13 +108,13 @@ void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat& t,
 		        } 
 	        }
 
-	    t.at<float>(i, j) = 1 - om*min_value;
+	    t(i, j) = 1 - om*min_value;
 	    }
     }
 }
 
 
-void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& dst, const cv::Mat& t,
+void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& dst, const cv::Mat_<float>& t,
 	const cv::Vec3b A, const float t0)
 {
     CV_Assert(t.type() == CV_32F);
@@ -231,17 +231,61 @@ void meanAndCovariance(const cv::Mat_<cv::Vec3b>& win, cv::Vec3f& m, cv::Mat_<fl
 }
 
 
-void softMatting(const cv::Mat_<cv::Vec3b>& src, const cv::Mat& t_hat, cv::Mat& t_refine,
+void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<float>& t_hat, cv::Mat_<float>& t_refine,
     const float lambda, const int w)
 {
-	unsigned int N = src.rows*src.cols;
+	float eps = 5e-4;
+	int N = src.rows*src.cols;
 	cv::Mat_<float> L(N, N);
 
 	for(int i = 0; i != N; ++i)
 	{
 		for(int j = 0; j != N; ++j)
 		{
-			
+			int row_i = i/src.rows, col_i = i%src.rows,
+			    row_j = j/src.rows, col_j = j%src.rows;
+			L(i, j) = 0.0f;
+
+			if(std::abs(row_i - row_j) >= w||std::abs(col_i - col_j) >= w) continue;
+			int br = row_i - w + 1, bc = col_i - w + 1;
+			for(int p = br; p != row_i + 1; ++p)
+			{
+				if(p < 0||p + w - 1 >= src.rows) continue;
+				for(int q = bc; q != col_i + 1; ++q)
+				{
+					if(q < 0||q + w - 1 >= src.cols) continue;
+					cv::Rect temp_win(q, p, w, w);
+					if(!temp_win.contains(cv::Point(col_j, row_j))) continue;
+
+					cv::Vec3f mean_value;
+					cv::Mat_<float> cov_mat;
+
+					meanAndCovariance(src.rowRange(p, p + w).colRange(q, q + w), mean_value, cov_mat);
+					cv::Mat_<float> I_i(1, 3), I_j(3, 1);
+					I_i(0, 0) = src(row_i, col_i)[0] - mean_value[0];
+					I_i(0, 1) = src(row_i, col_i)[1] - mean_value[1];
+					I_i(0, 2) = src(row_i, col_i)[2] - mean_value[2];
+
+					I_j(0, 0) = src(row_j, col_j)[0] - mean_value[0];
+					I_j(1, 0) = src(row_j, col_j)[1] - mean_value[1];
+					I_j(2, 0) = src(row_j, col_j)[2] - mean_value[2];
+
+					cv::Mat_<float> temp_mat;
+					cv::invert(cov_mat + cv::Mat_<float>::eye(3, 3)*eps/(w*w), temp_mat);
+					temp_mat = I_i*temp_mat*I_j;
+					L(i, j) += i == j ? 1 - (1 + temp_mat(0, 0))/(w*w) :
+					    0 - (1 + temp_mat(0, 0))/(w*w);
+				}
+			}
 		}
 	}
+
+	t_hat.reshape(0, N);
+	t_refine.create(t_hat.size());
+
+	cv::Mat_<float> A = L + lambda*cv::Mat_<float>::eye(N, N);
+	t_hat = lambda*t_hat;
+
+	linearEquationSolver(A, t_hat, t_refine);
+	t_refine.reshape(0, src.rows);
 }
