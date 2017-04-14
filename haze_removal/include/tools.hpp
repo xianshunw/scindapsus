@@ -19,7 +19,7 @@ void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& d
 	const cv::Vec3b A, const float t0 = 0.1);
 	
 /** @brief Solver Linear Equations*/
-void linearEquationSolver(cv::Mat_<float>& A, cv::Mat_<float>& b, cv::Mat_<float>& X,
+void linearEquationSolver(cv::SparseMat_<float>& A, cv::Mat_<float>& b, cv::Mat_<float>& X,
     const float omega = 0.5, const float T = 10e-6, unsigned int N = 10e6);
 
 /** @brief Calculate Mean And Covariance of pixels in input window*/

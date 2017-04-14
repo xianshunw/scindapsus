@@ -5,6 +5,7 @@
 #include <random>
 #include <ctime>
 #include <cmath>
+#include <iostream>
 
 void calcDarkChannel(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<uchar>& dst, const int s)
 {
@@ -134,30 +135,29 @@ void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& d
     }
 }
 
-void linearEquationSolver(cv::Mat_<float>& A, cv::Mat_<float>& b, cv::Mat_<float>& X,
+void linearEquationSolver(cv::SparseMat_<float>& A, cv::Mat_<float>& b, cv::Mat_<float>& X,
     const float omega, const float T, unsigned int N)
 {
 	CV_Assert(b.cols == 1);
-	CV_Assert(A.rows == b.rows);
-	CV_Assert(A.cols == A.rows);
 
 	//row elementary operation
 	bool flag = true;
-	for(int i = 0; i != A.rows; ++i)
+	for(int i = 0; i != b.rows; ++i)
 	{
-		if(A(i, i) == 0.0f)
+		if(A.ref(i, i) == 0.0f)
 		{
 			flag = false;
-			for(int j = 0; j != A.cols; ++j)
+			for(int j = 0; j != b.rows; ++j)
 			{
 				if(i == j) continue;
-				if(A(i, j) != 0.0f&&A(j, i) != 0.0f)
+				if(A.ref(i, j) != 0.0f&&A.ref(j, i) != 0.0f)
 				{
-					cv::Mat t;
-					A.row(i).copyTo(t); A.row(j).copyTo(A.row(i));
-					t.copyTo(A.row(j));
-					b.row(i).copyTo(t); b.row(j).copyTo(b.row(i));
-					t.copyTo(b.row(j));
+					for(int k = 0; k != b.rows; ++k)
+					{
+						float temp_value = A.ref(i, k);
+						if(A.ref(j, k) == 0.0f) A.erase(i, k); else A.ref(i, k) = A.ref(j, k);
+						if(temp_value == 0.0f) A.erase(j, k); else A.ref(j, k) = temp_value;
+					}
 
 					flag = true;
 					break;
@@ -167,15 +167,15 @@ void linearEquationSolver(cv::Mat_<float>& A, cv::Mat_<float>& b, cv::Mat_<float
 	}
 	CV_Assert(flag);
 	
-	X.create(b.size());
-	
 	std::default_random_engine generator(time(NULL));
 	std::uniform_real_distribution<float> distribution(0, 1);
 	for(int i = 0; i != X.rows; ++i)
 	{
 		X(i, 0) = distribution(generator);
 	}
+	X.create(b.size());
 	
+	std::cout << "SOR Iterating..." << std::endl;
 	while(--N)
 	{
 		cv::Mat_<float> pre_X = X.clone();
@@ -189,12 +189,13 @@ void linearEquationSolver(cv::Mat_<float>& A, cv::Mat_<float>& b, cv::Mat_<float
 				X(i, 0) += A(i, j)*X(j, 0);
 			}
 			
-			X(i, 0) = (1/A(i, i)*(b(i, 0) - X(i, 0)))*omega + (1 - omega)*pre_X(i, 0);
+			X(i, 0) = (omega/A(i, i)*(b(i, 0) - X(i, 0))) + (1 - omega)*pre_X(i, 0);
 		}
 		
 		double max_value;
 		cv::minMaxIdx(cv::abs(pre_X - X), 0, &max_value);
 		if (max_value <= T) break;
+		std::cout<< "error = " << max_value <<std::endl;
 	}
 }
 
@@ -236,17 +237,19 @@ void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<float>& t_hat, cv::Mat
 {
 	float eps = 5e-4;
 	int N = src.rows*src.cols;
-	cv::Mat_<float> L(N, N);
+	int size[] = { N, N };
+	cv::SparseMat_<float> L(2, size);
 
+	std::cout<< "compute laplacian matrix... " << std::endl;
 	for(int i = 0; i != N; ++i)
 	{
 		for(int j = 0; j != N; ++j)
 		{
 			int row_i = i/src.rows, col_i = i%src.rows,
 			    row_j = j/src.rows, col_j = j%src.rows;
-			L(i, j) = 0.0f;
 
 			if(std::abs(row_i - row_j) >= w||std::abs(col_i - col_j) >= w) continue;
+			L.ref(i, j) = 0.0f;
 			int br = row_i - w + 1, bc = col_i - w + 1;
 			for(int p = br; p != row_i + 1; ++p)
 			{
@@ -273,19 +276,21 @@ void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<float>& t_hat, cv::Mat
 					cv::Mat_<float> temp_mat;
 					cv::invert(cov_mat + cv::Mat_<float>::eye(3, 3)*eps/(w*w), temp_mat);
 					temp_mat = I_i*temp_mat*I_j;
-					L(i, j) += i == j ? 1 - (1 + temp_mat(0, 0))/(w*w) :
+					L.ref(i, j) += i == j ? 1 - (1 + temp_mat(0, 0))/(w*w) :
 					    0 - (1 + temp_mat(0, 0))/(w*w);
 				}
 			}
 		}
 	}
 
-	t_hat.reshape(0, N);
-	t_refine.create(t_hat.size());
+	t_hat = lambda*t_hat.reshape(1, N);
 
-	cv::Mat_<float> A = L + lambda*cv::Mat_<float>::eye(N, N);
-	t_hat = lambda*t_hat;
+	for(int i = 0; i != N; ++i)
+	{
+		L.ref(i, i) += lambda;
+	}
 
-	linearEquationSolver(A, t_hat, t_refine);
-	t_refine.reshape(0, src.rows);
+	linearEquationSolver(L, t_hat, t_refine);
+	t_refine = t_refine.reshape(2, src.rows);
+	t_refine = t_refine;
 }
