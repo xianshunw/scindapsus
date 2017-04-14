@@ -5,4 +5,11 @@ Code for paper [*Single Image Haze Removal Using Dark Channel Prior*](http://cn.
 This code is based on OpenCV only. You can install it under the guidence of [this page](http://docs.opencv.org/master/df/d65/tutorial_table_of_content_introduction.html).
 
 ## Build
-You may cmake to build this project.
+You need cmake to build this project using the following command:
+```
+mkdir build
+cd build
+cmake ..
+make
+```
+Then it will generate executable under the folder `../haze_removal/bin`
