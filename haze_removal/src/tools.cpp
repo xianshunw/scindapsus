@@ -46,7 +46,7 @@ void estimateAtmosphericLight(const cv::Mat_<cv::Vec3b>& src, const cv::Mat_<uch
 	    }
     }
 
-    float n = dark_channel.rows*dark_channel.cols, cum = 0;
+    double n = dark_channel.rows*dark_channel.cols, cum = 0;
     uchar threshold = 0;
     for(int i = 0; i != 256; ++i)
     {
@@ -85,7 +85,7 @@ void estimateAtmosphericLight(const cv::Mat_<cv::Vec3b>& src, const cv::Mat_<uch
     }
 }
 
-void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat_<float>& t, const int s, const float om)
+void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat_<double>& t, const int s, const double om)
 {
     t.create(src.size());
     cv::Vec3f Af(A[0], A[1], A[2]);
@@ -94,7 +94,7 @@ void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat_<fl
     {
 	    for(int j = 0; j != src.cols; ++j)
 	    {
-	        float min_value = std::numeric_limits<float>::max();
+	        double min_value = std::numeric_limits<double>::max();
 	        int bi = i - (s >> 1), ei = bi + s,
 		    bj = j - (s >> 1), ej = bj + s;
 	        for(int p = bi; p != ei; ++p)
@@ -115,10 +115,10 @@ void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat_<fl
 }
 
 
-void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& dst, const cv::Mat_<float>& t,
-	const cv::Vec3b A, const float t0)
+void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& dst, const cv::Mat_<double>& t,
+	const cv::Vec3b A, const double t0)
 {
-    CV_Assert(t.type() == CV_32F);
+    CV_Assert(t.type() == CV_64F);
     cv::Vec3f Af(A[0], A[1], A[2]);
 
     dst.create(src.size());
@@ -126,7 +126,7 @@ void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& d
     {
 	    for(int j = 0; j != src.cols; ++j)
 	    {
-	        float r = t.at<float>(i, j) > t0 ? t.at<float>(i, j) : t0;
+	        double r = t.at<double>(i, j) > t0 ? t.at<double>(i, j) : t0;
 
 	        dst(i, j)[0] = (src(i, j)[0] - Af[0])/r + A[0];
 	        dst(i, j)[1] = (src(i, j)[1] - Af[1])/r + A[1];
@@ -135,8 +135,8 @@ void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& d
     }
 }
 
-void linearEquationSolver(cv::SparseMat_<float>& A, cv::Mat_<float>& b, cv::Mat_<float>& X,
-    const float omega, const float T, unsigned int N)
+void linearEquationSolver(cv::SparseMat_<double>& A, cv::Mat_<double>& b, cv::Mat_<double>& X,
+    const double omega, const double T, unsigned int N)
 {
 	CV_Assert(b.cols == 1);
 
@@ -154,7 +154,7 @@ void linearEquationSolver(cv::SparseMat_<float>& A, cv::Mat_<float>& b, cv::Mat_
 				{
 					for(int k = 0; k != b.rows; ++k)
 					{
-						float temp_value = A.ref(i, k);
+						double temp_value = A.ref(i, k);
 						if(A.ref(j, k) == 0.0f) A.erase(i, k); else A.ref(i, k) = A.ref(j, k);
 						if(temp_value == 0.0f) A.erase(j, k); else A.ref(j, k) = temp_value;
 					}
@@ -168,7 +168,7 @@ void linearEquationSolver(cv::SparseMat_<float>& A, cv::Mat_<float>& b, cv::Mat_
 	CV_Assert(flag);
 	
 	std::default_random_engine generator(time(NULL));
-	std::uniform_real_distribution<float> distribution(0, 1);
+	std::uniform_real_distribution<double> distribution(0, 1);
 	for(int i = 0; i != X.rows; ++i)
 	{
 		X(i, 0) = distribution(generator);
@@ -178,7 +178,7 @@ void linearEquationSolver(cv::SparseMat_<float>& A, cv::Mat_<float>& b, cv::Mat_
 	std::cout << "SOR Iterating..." << std::endl;
 	while(--N)
 	{
-		cv::Mat_<float> pre_X = X.clone();
+		cv::Mat_<double> pre_X = X.clone();
 		for(int i = 0; i != X.rows; ++i)
 		{
 			CV_Assert(A(i, i) != 0.0f);
@@ -199,11 +199,11 @@ void linearEquationSolver(cv::SparseMat_<float>& A, cv::Mat_<float>& b, cv::Mat_
 	}
 }
 
-void meanAndCovariance(const cv::Mat_<cv::Vec3b>& win, cv::Vec3f& m, cv::Mat_<float>& c)
+void meanAndCovariance(const cv::Mat_<cv::Vec3b>& win, cv::Vec3f& m, cv::Mat_<double>& c)
 {
 	int N = win.rows*win.cols;
 
-	cv::Mat_<float> bgrMat(N, 3);
+	cv::Mat_<double> bgrMat(N, 3);
 	for(int i = 0; i != win.rows; ++i)
 	{
 		for(int j = 0; j != win.cols; ++j)
@@ -232,13 +232,13 @@ void meanAndCovariance(const cv::Mat_<cv::Vec3b>& win, cv::Vec3f& m, cv::Mat_<fl
 }
 
 
-void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<float>& t_hat, cv::Mat_<float>& t_refine,
-    const float lambda, const int w)
+void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<double>& t_hat, cv::Mat_<double>& t_refine,
+    const double lambda, const int w)
 {
-	float eps = 5e-4;
+	double eps = 5e-4;
 	int N = src.rows*src.cols;
 	int size[] = { N, N };
-	cv::SparseMat_<float> L(2, size);
+	cv::SparseMat_<double> L(2, size);
 
 	std::cout<< "compute laplacian matrix... " << std::endl;
 	for(int i = 0; i != N; ++i)
@@ -261,10 +261,10 @@ void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<float>& t_hat, cv::Mat
 					if(!temp_win.contains(cv::Point(col_j, row_j))) continue;
 
 					cv::Vec3f mean_value;
-					cv::Mat_<float> cov_mat;
+					cv::Mat_<double> cov_mat;
 
 					meanAndCovariance(src.rowRange(p, p + w).colRange(q, q + w), mean_value, cov_mat);
-					cv::Mat_<float> I_i(1, 3), I_j(3, 1);
+					cv::Mat_<double> I_i(1, 3), I_j(3, 1);
 					I_i(0, 0) = src(row_i, col_i)[0] - mean_value[0];
 					I_i(0, 1) = src(row_i, col_i)[1] - mean_value[1];
 					I_i(0, 2) = src(row_i, col_i)[2] - mean_value[2];
@@ -273,8 +273,8 @@ void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<float>& t_hat, cv::Mat
 					I_j(1, 0) = src(row_j, col_j)[1] - mean_value[1];
 					I_j(2, 0) = src(row_j, col_j)[2] - mean_value[2];
 
-					cv::Mat_<float> temp_mat;
-					cv::invert(cov_mat + cv::Mat_<float>::eye(3, 3)*eps/(w*w), temp_mat);
+					cv::Mat_<double> temp_mat;
+					cv::invert(cov_mat + cv::Mat_<double>::eye(3, 3)*eps/(w*w), temp_mat);
 					temp_mat = I_i*temp_mat*I_j;
 					L.ref(i, j) += i == j ? 1 - (1 + temp_mat(0, 0))/(w*w) :
 					    0 - (1 + temp_mat(0, 0))/(w*w);
