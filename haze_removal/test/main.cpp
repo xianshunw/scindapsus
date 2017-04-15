@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
     cv::Vec3b A;
     estimateAtmosphericLight(img, dark_channel, A);
 
-    cv::Mat_<double> t, t_refine; cv::Mat t_show;
+    cv::Mat_<double> t, t_refine; cv::Mat t_show, t_refine_show;
     double min_value, max_value;
     initTransMap(img, A, t, 10);
     cv::Mat tMat = t;
@@ -29,30 +29,32 @@ int main(int argc, char* argv[])
     tMat.convertTo(t_show, CV_8U, 255.0/(max_value-min_value));//, 255.0*min_value/(max_value- min_value));
     
     softMatting(img, t, t_refine);
+
+    tMat = t_refine;
+    cv::minMaxIdx(t_refine, &min_value, &max_value);
+    tMat.convertTo(t_refine_show, CV_8U, 255.0/(max_value-min_value));
     
     cv::Mat_<cv::Vec3b> recoverImg;
     recoverSceneRadiance(img, recoverImg, t_refine, A);
-    //int size[] = {3, 3};
-    //cv::SparseMat_<double> CoeffMat(2, size);
-    //CoeffMat.ref(0, 0) = 4; CoeffMat.ref(0, 1) = 3;
-    //CoeffMat.ref(1, 0) = 3; CoeffMat.ref(1, 1) = 4; CoeffMat.ref(1, 2) = -1;
-    //CoeffMat.ref(2, 1) = -1; CoeffMat.ref(2, 2) = 4;
-
-    //cv::Mat_<double> b(3, 1);
-    //b(0, 0) = 24; b(1, 0) = 30; b(2, 0) = -24;
-    //cv::Mat_<double> X;
-    //linearEquationSolver(CoeffMat, b, X);
-
-    //std::cout << "X = " << X << std::endl;
 
     cv::namedWindow("source img");
     cv::imshow("source img", img);
+
     cv::namedWindow("dark_channel");
     cv::imshow("dark_channel", dark_channel);
-    cv::namedWindow("transmission");
-    cv::imshow("transmission", t_show);
+    cv::imwrite("dark_channel.jpg", dark_channel);
+
+    cv::namedWindow("transmission_init");
+    cv::imshow("transmission_init", t_show);
+    cv::imwrite("transmission_init.jpg", t_show);
+
+    cv::namedWindow("transmission_refine");
+    cv::imshow("transmission_refine", t_refine_show);
+    cv::imwrite("transmission_refine.jpg", t_refine_show);
+
     cv::namedWindow("recoverImg");
     cv::imshow("recoverImg", recoverImg);
+    cv::imwrite("recoverImg.jpg", recoverImg);
     cv::waitKey();
 
 }
