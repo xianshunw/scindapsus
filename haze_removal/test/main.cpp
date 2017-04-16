@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 {
     std::string image_name;
     if(argc < 2)
-        image_name = "test1.bmp";
+        image_name = "test1.jpg";
     else
         image_name = argv[1];
 
@@ -26,13 +26,13 @@ int main(int argc, char* argv[])
     initTransMap(img, A, t, 10);
     cv::Mat tMat = t;
     cv::minMaxIdx(t, &min_value, &max_value);
-    tMat.convertTo(t_show, CV_8U, 255.0/(max_value-min_value));//, 255.0*min_value/(max_value- min_value));
+    tMat.convertTo(t_show, CV_8U, 255.0/(max_value-min_value), -255.0*min_value/(max_value- min_value));
     
     softMatting(img, t, t_refine);
 
     tMat = t_refine;
     cv::minMaxIdx(t_refine, &min_value, &max_value);
-    tMat.convertTo(t_refine_show, CV_8U, 255.0/(max_value-min_value));
+    tMat.convertTo(t_refine_show, CV_8U, 255.0/(max_value-min_value), -255.0*min_value/(max_value- min_value));
     
     cv::Mat_<cv::Vec3b> recoverImg;
     recoverSceneRadiance(img, recoverImg, t_refine, A);

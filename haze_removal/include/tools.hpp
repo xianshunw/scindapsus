@@ -19,11 +19,11 @@ void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& d
 	const cv::Vec3b A, const double t0 = 0.1);
 	
 /** @brief Solver Linear Equations*/
-void linearEquationSolver(cv::SparseMat_<double>& A, cv::Mat_<double>& b, cv::Mat_<double>& X,
-    const double omega = 1.23, const double T = 10e-3, unsigned int N = 10e6);
+void linearEquationSolver(cv::SparseMat_<double>& A, cv::Mat_<double>& b, cv::Mat_<double>& X, cv::Size img_size,
+    const int w = 3, const double omega = 1.23, const double T = 10e-6, unsigned int N = 10e6);
 
 /** @brief Calculate Mean And Covariance of pixels in input window*/
-void meanAndCovariance(const cv::Mat_<cv::Vec3b>& win, cv::Vec3f& m, cv::Mat_<double>& c);
+void meanAndCovariance(const cv::Mat_<cv::Vec3b>& win, cv::Vec3d& m, cv::Mat_<double>& c);
 
 /** @brief Soft Matting*/
 void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<double>& t_hat, cv::Mat_<double>& t_refine,

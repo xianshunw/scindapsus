@@ -6,6 +6,7 @@
 #include <ctime>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 
 void calcDarkChannel(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<uchar>& dst, const int s)
 {
@@ -88,7 +89,7 @@ void estimateAtmosphericLight(const cv::Mat_<cv::Vec3b>& src, const cv::Mat_<uch
 void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat_<double>& t, const int s, const double om)
 {
     t.create(src.size());
-    cv::Vec3f Af(A[0], A[1], A[2]);
+    cv::Vec3d Af(A[0], A[1], A[2]);
 
     for(int i = 0; i != src.rows; ++i)
     {
@@ -119,7 +120,7 @@ void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& d
 	const cv::Vec3b A, const double t0)
 {
     CV_Assert(t.type() == CV_64F);
-    cv::Vec3f Af(A[0], A[1], A[2]);
+    cv::Vec3d Af(A[0], A[1], A[2]);
 
     dst.create(src.size());
     for(int i = 0; i != src.rows; ++i)
@@ -135,8 +136,8 @@ void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& d
     }
 }
 
-void linearEquationSolver(cv::SparseMat_<double>& A, cv::Mat_<double>& b, cv::Mat_<double>& X,
-    const double omega, const double T, unsigned int N)
+void linearEquationSolver(cv::SparseMat_<double>& A, cv::Mat_<double>& b, cv::Mat_<double>& X, cv::Size img_size,
+    const int w, const double omega, const double T, unsigned int N)
 {
 	CV_Assert(b.cols == 1);
 
@@ -144,19 +145,19 @@ void linearEquationSolver(cv::SparseMat_<double>& A, cv::Mat_<double>& b, cv::Ma
 	bool flag = true;
 	for(int i = 0; i != b.rows; ++i)
 	{
-		if(A.ref(i, i) == 0.0f)
+		if(A.ref(i, i) == 0.0)
 		{
 			flag = false;
 			for(int j = 0; j != b.rows; ++j)
 			{
 				if(i == j) continue;
-				if(A.ref(i, j) != 0.0f&&A.ref(j, i) != 0.0f)
+				if(A.ref(i, j) != 0.0&&A.ref(j, i) != 0.0)
 				{
 					for(int k = 0; k != b.rows; ++k)
 					{
 						double temp_value = A.ref(i, k);
-						if(A.ref(j, k) == 0.0f) A.erase(i, k); else A.ref(i, k) = A.ref(j, k);
-						if(temp_value == 0.0f) A.erase(j, k); else A.ref(j, k) = temp_value;
+						if(A.ref(j, k) == 0.0) A.erase(i, k); else A.ref(i, k) = A.ref(j, k);
+						if(temp_value == 0.0) A.erase(j, k); else A.ref(j, k) = temp_value;
 					}
 
 					flag = true;
@@ -167,13 +168,40 @@ void linearEquationSolver(cv::SparseMat_<double>& A, cv::Mat_<double>& b, cv::Ma
 	}
 	CV_Assert(flag);
 	
+	X.create(b.size());
 	std::default_random_engine generator(time(NULL));
 	std::uniform_real_distribution<double> distribution(0, 1);
 	for(int i = 0; i != X.rows; ++i)
 	{
 		X(i, 0) = distribution(generator);
 	}
-	X.create(b.size());
+
+	std::ofstream L_matrix("L.txt");
+	for(int i = 0; i != X.rows; ++i)
+	{
+		X(i, 0) = 0;
+		int row_i = i/img_size.width, col_i = i%img_size.width;
+		for(int p = row_i - w + 1; p != row_i + w; ++p)
+		{
+			if(p < 0||p >= img_size.height) continue;
+			for(int q = col_i - w + 1; q != col_i + w; ++q)
+			{
+				if(q < 0||q >= img_size.width) continue;
+
+				int j = p*img_size.width + q;
+
+				L_matrix << i <<' ' << j << " " << A(i, j) << std::endl;
+			}
+		}
+	}
+	L_matrix.close();
+
+	std::ofstream b_coeff("b.txt");
+	for(int i = 0; i != b.rows; ++i)
+	{
+		b_coeff << b(i, 0) << std::endl;
+	}
+	b_coeff.close();
 	
 	std::cout << "SOR Iterating..." << std::endl;
 	while(--N)
@@ -181,25 +209,34 @@ void linearEquationSolver(cv::SparseMat_<double>& A, cv::Mat_<double>& b, cv::Ma
 		cv::Mat_<double> pre_X = X.clone();
 		for(int i = 0; i != X.rows; ++i)
 		{
-			CV_Assert(A(i, i) != 0.0f);
+			CV_Assert(A(i, i) != 0.0);
 			X(i, 0) = 0;
-			for(int j = 0; j != X.rows; ++j)
+			int row_i = i/img_size.width, col_i = i%img_size.width;
+			for(int p = row_i - w + 1; p != row_i + w; ++p)
 			{
-				if(i == j) continue;
-				X(i, 0) += A(i, j)*X(j, 0);
-			}
-			
+				if(p < 0||p >= img_size.height) continue;
+				for(int q = col_i - w + 1; q != col_i + w; ++q)
+				{
+					if(q < 0||q >= img_size.width) continue;
+
+
+					int j = p*img_size.width + q;
+					if(i == j) continue;
+
+					X(i, 0) += A(i, j)*X(j, 0);
+				}
+			}			
 			X(i, 0) = (omega/A(i, i)*(b(i, 0) - X(i, 0))) + (1 - omega)*pre_X(i, 0);
 		}
 		
 		double max_value;
 		cv::minMaxIdx(cv::abs(pre_X - X), 0, &max_value);
-		if (max_value <= T) break;
 		std::cout<< "error = " << max_value <<std::endl;
+		if (max_value <= T) break;
 	}
 }
 
-void meanAndCovariance(const cv::Mat_<cv::Vec3b>& win, cv::Vec3f& m, cv::Mat_<double>& c)
+void meanAndCovariance(const cv::Mat_<cv::Vec3b>& win, cv::Vec3d& m, cv::Mat_<double>& c)
 {
 	int N = win.rows*win.cols;
 
@@ -240,44 +277,48 @@ void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<double>& t_hat, cv::Ma
 	int size[] = { N, N };
 	cv::SparseMat_<double> L(2, size);
 
-	std::cout<< "compute laplacian matrix... " << std::endl;
+	cv::Mat_<int> win_idxs(1, N);
 	for(int i = 0; i != N; ++i)
 	{
-		for(int j = 0; j != N; ++j)
+		win_idxs(0, i) = i;
+	}
+	win_idxs = win_idxs.reshape(2, src.rows);
+
+	std::cout<< "compute laplacian matrix... " << std::endl;
+	cv::Mat_<double> U = cv::Mat_<double>::eye(3, 3)*eps/(w*w);
+	for(int i = w >> 1; i != src.rows - (w >> 1); ++i)
+	{
+		for(int j = w >> 1; j != src.cols - (w >> 1); ++j)
 		{
-			int row_i = i/src.rows, col_i = i%src.rows,
-			    row_j = j/src.rows, col_j = j%src.rows;
+			cv::Mat_<cv::Vec3b> win = src.rowRange(i - (w >> 1), i + (w >> 1) + 1).colRange(j - (w >> 1), j + (w >> 1) + 1);
+			cv::Mat_<int> win_idx = win_idxs.rowRange(i - (w >> 1), i + (w >> 1) + 1).colRange(j - (w >> 1), j + (w >> 1) + 1);
+			cv::Vec3d mean_value;
+			cv::Mat_<double> cov_mat;
 
-			if(std::abs(row_i - row_j) >= w||std::abs(col_i - col_j) >= w) continue;
-			L.ref(i, j) = 0.0f;
-			int br = row_i - w + 1, bc = col_i - w + 1;
-			for(int p = br; p != row_i + 1; ++p)
+			meanAndCovariance(win, mean_value, cov_mat);
+			cv::Mat_<double> invert_mat;
+			cv::invert(cov_mat/(w*w) + U, invert_mat);
+
+			for(int p = 0; p != w*w; ++p)
 			{
-				if(p < 0||p + w - 1 >= src.rows) continue;
-				for(int q = bc; q != col_i + 1; ++q)
+				for(int q = 0; q != w*w; ++q)
 				{
-					if(q < 0||q + w - 1 >= src.cols) continue;
-					cv::Rect temp_win(q, p, w, w);
-					if(!temp_win.contains(cv::Point(col_j, row_j))) continue;
+					int row_p = p/win.rows, col_p = p%win.rows,
+					    row_q = q/win.rows, col_q = q%win.rows;
+					cv::Mat_<double> I_p(1, 3), I_q(3, 1);
+					I_p(0, 0) = win(row_p, col_p)[0] - mean_value[0];
+					I_p(0, 1) = win(row_p, col_p)[1] - mean_value[1];
+					I_p(0, 2) = win(row_p, col_p)[2] - mean_value[2];
 
-					cv::Vec3f mean_value;
-					cv::Mat_<double> cov_mat;
+					I_q(0, 0) = win(row_q, col_q)[0] - mean_value[0];
+					I_q(1, 0) = win(row_q, col_q)[1] - mean_value[1];
+					I_q(2, 0) = win(row_q, col_q)[2] - mean_value[2];
 
-					meanAndCovariance(src.rowRange(p, p + w).colRange(q, q + w), mean_value, cov_mat);
-					cv::Mat_<double> I_i(1, 3), I_j(3, 1);
-					I_i(0, 0) = src(row_i, col_i)[0] - mean_value[0];
-					I_i(0, 1) = src(row_i, col_i)[1] - mean_value[1];
-					I_i(0, 2) = src(row_i, col_i)[2] - mean_value[2];
-
-					I_j(0, 0) = src(row_j, col_j)[0] - mean_value[0];
-					I_j(1, 0) = src(row_j, col_j)[1] - mean_value[1];
-					I_j(2, 0) = src(row_j, col_j)[2] - mean_value[2];
-
-					cv::Mat_<double> temp_mat;
-					cv::invert(cov_mat + cv::Mat_<double>::eye(3, 3)*eps/(w*w), temp_mat);
-					temp_mat = I_i*temp_mat*I_j;
-					L.ref(i, j) += i == j ? 1 - (1 + temp_mat(0, 0))/(w*w) :
-					    0 - (1 + temp_mat(0, 0))/(w*w);
+					cv::Mat_<double> L_element = (1 + I_p*invert_mat*I_q)/(w*w);
+					if(win_idx(row_p, col_p) == win_idx(row_q, col_q))
+						L.ref(win_idx(row_p, col_p), win_idx(row_q, col_q)) += (1 - L_element(0, 0));
+					else
+						L.ref(win_idx(row_p, col_p), win_idx(row_q, col_q)) += (0 - L_element(0, 0));
 				}
 			}
 		}
@@ -290,7 +331,7 @@ void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<double>& t_hat, cv::Ma
 		L.ref(i, i) += lambda;
 	}
 
-	linearEquationSolver(L, t_hat, t_refine);
+	linearEquationSolver(L, t_hat, t_refine, src.size());
 	t_refine = t_refine.reshape(2, src.rows);
 	t_refine = t_refine;
 }
