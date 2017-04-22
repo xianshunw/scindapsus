@@ -9,14 +9,14 @@
 void calcDarkChannel(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<uchar>& dst, const int s = 15);
 
 /** @brief Estimate Atmospheric Light */
-void estimateAtmosphericLight(const cv::Mat_<cv::Vec3b>& src, const cv::Mat_<uchar>& dark_channel, cv::Vec3b& A);
+void estimateAtmosphericLight(const cv::Mat_<cv::Vec3b>& src, const cv::Mat_<uchar>& dark_channel, cv::Vec3d& A);
 
 /** @brief Estimate Initial Transmission Map*/
-void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat_<double>& t, const int s = 15, const double om = 0.95);
+void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3d A, cv::Mat_<double>& t, const int s = 15, const double om = 0.95);
 
 /** @brief Recover the Scene Radiance*/
 void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& dst, const cv::Mat_<double>& t,
-	const cv::Vec3b A, const double t0 = 0.1);
+	const cv::Vec3d A, const double t0 = 0.1);
 	
 /** @brief Solver Linear Equations*/
 void linearEquationSolver(cv::SparseMat_<double>& A, cv::Mat_<double>& b, cv::Mat_<double>& X, cv::Size img_size,

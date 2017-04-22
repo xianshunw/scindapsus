@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
     cv::Mat_<uchar> dark_channel;
     calcDarkChannel(img, dark_channel);
 
-    cv::Vec3b A;
+    cv::Vec3d A;
     estimateAtmosphericLight(img, dark_channel, A);
 
     cv::Mat_<double> t, t_refine; cv::Mat t_show, t_refine_show;

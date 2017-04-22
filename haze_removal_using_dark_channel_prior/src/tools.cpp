@@ -36,7 +36,7 @@ void calcDarkChannel(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<uchar>& dst, const
     }
 }
 
-void estimateAtmosphericLight(const cv::Mat_<cv::Vec3b>& src, const cv::Mat_<uchar>& dark_channel, cv::Vec3b& A)
+void estimateAtmosphericLight(const cv::Mat_<cv::Vec3b>& src, const cv::Mat_<uchar>& dark_channel, cv::Vec3d& A)
 {
     int table[256] = { 0 };
     for(int i = 0; i != dark_channel.rows; ++i)
@@ -86,10 +86,9 @@ void estimateAtmosphericLight(const cv::Mat_<cv::Vec3b>& src, const cv::Mat_<uch
     }
 }
 
-void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat_<double>& t, const int s, const double om)
+void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3d A, cv::Mat_<double>& t, const int s, const double om)
 {
     t.create(src.size());
-    cv::Vec3d Af(A[0], A[1], A[2]);
 
     for(int i = 0; i != src.rows; ++i)
     {
@@ -104,9 +103,9 @@ void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat_<do
 		        for(int q = bj; q != ej; ++q)
 		        {
 		            if(q < 0||q >= src.cols) continue;
-		            if(min_value > src(p, q)[0]/Af[0]) min_value = src(p, q)[0]/Af[0];
-		            if(min_value > src(p, q)[1]/Af[1]) min_value = src(p, q)[1]/Af[1];
-		            if(min_value > src(p, q)[2]/Af[2]) min_value = src(p, q)[2]/Af[2];
+		            if(min_value > src(p, q)[0]/A[0]) min_value = src(p, q)[0]/A[0];
+		            if(min_value > src(p, q)[1]/A[1]) min_value = src(p, q)[1]/A[1];
+		            if(min_value > src(p, q)[2]/A[2]) min_value = src(p, q)[2]/A[2];
 		        } 
 	        }
 
@@ -117,10 +116,9 @@ void initTransMap(const cv::Mat_<cv::Vec3b>& src, const cv::Vec3b A, cv::Mat_<do
 
 
 void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& dst, const cv::Mat_<double>& t,
-	const cv::Vec3b A, const double t0)
+	const cv::Vec3d A, const double t0)
 {
     CV_Assert(t.type() == CV_64F);
-    cv::Vec3d Af(A[0], A[1], A[2]);
 
     dst.create(src.size());
     for(int i = 0; i != src.rows; ++i)
@@ -129,9 +127,9 @@ void recoverSceneRadiance(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<cv::Vec3b>& d
 	    {
 	        double r = t.at<double>(i, j) > t0 ? t.at<double>(i, j) : t0;
 
-	        dst(i, j)[0] = (src(i, j)[0] - Af[0])/r + A[0];
-	        dst(i, j)[1] = (src(i, j)[1] - Af[1])/r + A[1];
-	        dst(i, j)[2] = (src(i, j)[2] - Af[2])/r + A[2];
+	        dst(i, j)[0] = (src(i, j)[0] - A[0])/r + A[0];
+	        dst(i, j)[1] = (src(i, j)[1] - A[1])/r + A[1];
+	        dst(i, j)[2] = (src(i, j)[2] - A[2])/r + A[2];
 	    }
     }
 }
@@ -175,33 +173,6 @@ void linearEquationSolver(cv::SparseMat_<double>& A, cv::Mat_<double>& b, cv::Ma
 	{
 		X(i, 0) = distribution(generator);
 	}
-
-	std::ofstream L_matrix("L.txt");
-	for(int i = 0; i != X.rows; ++i)
-	{
-		X(i, 0) = 0;
-		int row_i = i/img_size.width, col_i = i%img_size.width;
-		for(int p = row_i - w + 1; p != row_i + w; ++p)
-		{
-			if(p < 0||p >= img_size.height) continue;
-			for(int q = col_i - w + 1; q != col_i + w; ++q)
-			{
-				if(q < 0||q >= img_size.width) continue;
-
-				int j = p*img_size.width + q;
-
-				L_matrix << i <<' ' << j << " " << A(i, j) << std::endl;
-			}
-		}
-	}
-	L_matrix.close();
-
-	std::ofstream b_coeff("b.txt");
-	for(int i = 0; i != b.rows; ++i)
-	{
-		b_coeff << b(i, 0) << std::endl;
-	}
-	b_coeff.close();
 	
 	std::cout << "SOR Iterating..." << std::endl;
 	while(--N)
