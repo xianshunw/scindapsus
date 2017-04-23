@@ -6,7 +6,6 @@
 #include <ctime>
 #include <cmath>
 #include <iostream>
-#include <fstream>
 
 void calcDarkChannel(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<uchar>& dst, const int s)
 {
@@ -253,7 +252,7 @@ void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<double>& t_hat, cv::Ma
 	{
 		win_idxs(0, i) = i;
 	}
-	win_idxs = win_idxs.reshape(2, src.rows);
+	win_idxs = win_idxs.reshape(1, src.rows);
 
 	std::cout<< "compute laplacian matrix... " << std::endl;
 	cv::Mat_<double> U = cv::Mat_<double>::eye(3, 3)*eps/(w*w);
@@ -303,6 +302,6 @@ void softMatting(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<double>& t_hat, cv::Ma
 	}
 
 	linearEquationSolver(L, t_hat, t_refine, src.size());
-	t_refine = t_refine.reshape(2, src.rows);
+	t_refine = t_refine.reshape(1, src.rows);
 	t_refine = t_refine;
 }
