@@ -4,12 +4,13 @@
 #include <opencv2/core.hpp>
 #include <opencv/cv.hpp>
 #include <vector>
-#include <utility>
+#include <map>
+#include <deque>
 
 struct polyhedron
 {
     std::vector<cv::Point3d> vertex_table;
-    std::vector<std::vector<int>> plane_table;
+    std::deque<std::vector<int>> plane_table;
 };
 
 
@@ -21,6 +22,13 @@ struct icosahedron
     void set(double r);
 
     polyhedron i;
+    double radius;
 };
+
+bool is_present(int idx1, int idx2, std::map<std::vector<int>, int>& mid_table, int& mid_idx);
+
+void scale2unit(cv::Point3d& pt, double unit = 1.0);
+
+void subdivide(icosahedron& src, polyhedron& dst, int num = 500);
 
 #endif
