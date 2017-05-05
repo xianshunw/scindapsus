@@ -2,8 +2,6 @@
 #include <opencv2/core.hpp>
 #include <opencv/cv.hpp>
 #include <cmath>
-#include <map>
-
 
 void icosahedron::set(double r)
 {
@@ -46,88 +44,6 @@ void icosahedron::set(double r)
     t[0] = 5; t[1] = 3; t[2] = 2; i.plane_table.push_back(t);
     t[0] = 9; t[1] = 11; t[2] = 2; i.plane_table.push_back(t);
     t[0] = 10; t[1] = 8; t[2] = 3; i.plane_table.push_back(t);
-}
-
-int dimension_choice(std::vector<cv::Point2d>& sph_table, std::vector<int>& subset)
-{
-    double mean_d1 = 0.0, mean_d2 = 0.0;
-    for(int i = 0; i != subset.size(); ++i)
-    {
-        mean_d1 += sph_table[subset[i]].x;
-        mean_d2 += sph_table[subset[i]].y;
-    }
-    mean_d1 /= sph_table.size();
-    mean_d2 /= sph_table.size();
-
-    double square_error1 = 0.0, square_error2 = 0.0;
-    for(int i = 0; i != subset.size(); ++i)
-    {
-        square_error1 += (sph_table[subset[i]].x - mean_d1)*(sph_table[subset[i]].x - mean_d1);
-        square_error2 += (sph_table[subset[i]].y - mean_d2)*(sph_table[subset[i]].y - mean_d2);
-    }
-
-    return square_error1 > square_error2 ? 0 : 1;
-}
-
-int split(std::vector<cv::Point2d>& sph_table, std::vector<int> subset,
-    std::vector<std::vector<int>>& split_subsets, int dimension)
-{
-    double *value = new double[sph_table.size()];
-    for(int i = 0; i != subset.size(); ++i)
-    {
-        value[i] = dimension == 0 ? sph_table[subset[i]].x : sph_table[subset[i]].y;
-    }
-
-    for(int i = 1; i != subset.size(); ++i)
-    {
-        for(int j = 0; j != subset.size() - i; ++j)
-        {
-            if(value[j] > value[j + 1])
-            {
-                double t1 = value[j];
-                value[j] = value[j + 1]; value[j + 1] = t1;
-                int t2 = subset[j];
-                subset[j] = subset[j + 1]; subset[j + 1] = t2;
-            }
-        }
-    }
-    delete[] value;
-
-    int r = subset.size()/2; split_subsets.clear();
-    std::vector<int> subset1, subset2;
-    for(auto iter = subset.cbegin(); iter != subset.cbegin() + r; ++iter)
-    {
-        subset1.push_back(*iter);
-    }
-    for(auto iter = subset.cbegin() + r + 1; iter != subset.cend(); ++iter)
-    {
-        subset2.push_back(*iter);
-    }
-    split_subsets.push_back(subset1); split_subsets.push_back(subset2);
-
-    return r;
-}
-
-kd_node* build_kdTree(std::vector<cv::Point2d>& sph_table, kd_node* p, std::vector<int> subset)
-{
-    kd_node* r = new kd_node; r->parent = p;
-    if(subset.size() == 1)
-    {
-        r->data = subset[0];
-        r->dimension = 0;
-        r->left = r->right = nullptr;
-        return r;
-    }
-
-    std::vector<std::vector<int>> subsets;
-    int d = dimension_choice(sph_table, subset);
-    r->data = split(sph_table, subset, subsets, d);
-
-
-    r->left = subsets[0].size() != 0 ? build_kdTree(sph_table, r, subsets[0]) : nullptr;
-    r->right = subsets[1].size() != 0 ? build_kdTree(sph_table, r, subsets[1]) : nullptr;
-
-    return r;
 }
 
 bool is_present(int idx1, int idx2, std::map<std::vector<int>, int>& mid_table, int& mid_idx)

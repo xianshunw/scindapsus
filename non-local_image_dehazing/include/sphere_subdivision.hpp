@@ -25,21 +25,6 @@ struct icosahedron
     double radius;
 };
 
-
-struct kd_node
-{
-    int data;
-    int dimension;
-    kd_node *left, *right, *parent;
-};
-
-int dimension_choice(std::vector<cv::Point2d>& sph_table, std::vector<int>& subset);
-
-int split(std::vector<cv::Point2d>& sph_table, std::vector<int> subset,
-    std::vector<std::vector<int>>& split_subsets, int dimension);
-
-kd_node* build_kdTree(std::vector<cv::Point2d>& sph_table, kd_node* p, std::vector<int> subset);
-
 bool is_present(int idx1, int idx2, std::map<std::vector<int>, int>& mid_table, int& mid_idx);
 
 void scale2unit(cv::Point3d& pt, double unit = 1.0);
