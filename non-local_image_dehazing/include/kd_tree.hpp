@@ -24,7 +24,6 @@ void print_kdTree(std::vector<cv::Point2d>& sph_table, kd_node* root, int blk = 
 
 void destory_kdTree(kd_node* root);
 
-void search_kdTree(std::vector<cv::Point2d>& sph_table, cv::Point2d pt, kd_node* root,
-    int& curr_nearest, double curr_dist);
+kd_node* search_kdTree(std::vector<cv::Point2d>& sph_table, cv::Point2d pt, kd_node* root);
 
 #endif
