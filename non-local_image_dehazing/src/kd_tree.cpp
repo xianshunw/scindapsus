@@ -118,76 +118,82 @@ void destory_kdTree(kd_node* root)
 
 kd_node* search_kdTree(std::vector<cv::Point2d>& sph_table, cv::Point2d pt, kd_node* root)
 {
-    if(root->is_leaf) return root;
-
-    kd_node* branch_nearest = root;
-    while(!branch_nearest->is_leaf)
+    kd_node* curr_nearest = root;
+    while(!curr_nearest->is_leaf)
     {
-        if(branch_nearest->left == nullptr)
+        if(curr_nearest->left == nullptr)
         {
-            branch_nearest = branch_nearest->right;
+            curr_nearest = curr_nearest->right;
             continue;
         }
-        if(branch_nearest->right == nullptr)
+        if(curr_nearest->right == nullptr)
         {
-            branch_nearest = branch_nearest->left;
+            curr_nearest = curr_nearest->left;
             continue;
         }
 
-        if(branch_nearest->dimension == 0)
+        if(curr_nearest->dimension == 0)
         {
-            branch_nearest = pt.x <= sph_table[branch_nearest->data].x ? branch_nearest->left :
-                branch_nearest->right;
+            curr_nearest = pt.x <= sph_table[curr_nearest->data].x ? curr_nearest->left :
+                curr_nearest->right;
         }
         else
         {
-            branch_nearest = pt.y <= sph_table[branch_nearest->data].y ? branch_nearest->right :
-                branch_nearest->right;
+            curr_nearest = pt.y <= sph_table[curr_nearest->data].y ? curr_nearest->right :
+                curr_nearest->right;
         }
     }
 
-    double curr_dist = points_distance(sph_table[branch_nearest->data], pt);
+    double curr_dist = points_distance(sph_table[curr_nearest->data], pt);
     kd_node* search_node = curr_nearest->parent;
 
     //backtrack
     while(search_node->parent != root->parent)
     {
-        //if another branch is empty
-        if(search_node->left == nullptr||search_node->right == nullptr)
-        {
-            search_node = search_node->parent;
-            continue;
-        }
-
-        double c = search_node->dimension == 0 ? std::abs(pt.x - sph_table[search_node->data].x) :
-            std::abs(pt.y - sph_table[search_node->data].y);
-        if(c <= curr_nearest)
+        double search_dist = points_distance(sph_table[search_node->data], pt);
+        if(search_dist < curr_dist)
         {
             kd_node* another_subtree = curr_nearest == search_node->left ? search_node->right :
                 search_node->left;
             curr_dist = search_dist;
             curr_nearest = search_node;
 
-            kd_node* nearest_another = search_kdTree(sph_table, pt, another_substree);
-            double another_dist = points_distance(sph_table[nearest_another->data], pt);
+            //if another branch isn't empty
+            if(another_subtree != nullptr)
+            {
+                kd_node* nearest_another = search_kdTree(sph_table, pt, another_subtree);
+                double another_dist = points_distance(sph_table[nearest_another->data], pt);
+                if(another_dist < curr_dist)
+                {
+                    curr_nearest = nearest_another;
+                    curr_dist = another_dist;
+                    search_node = curr_nearest->parent;
+                    continue;
+                }
+            }
 
-            if(another_dist < curr_nearest)
+            search_node = search_node->parent;
+            continue;
+        }
+
+        double c = search_node->dimension == 0 ? std::abs(pt.x - sph_table[search_node->data].x) :
+            std::abs(pt.y - sph_table[search_node->data].y);
+        kd_node* another_subtree = curr_nearest == search_node->left ? search_node->right :
+                search_node->left;
+        if(c <= curr_dist&&another_subtree != nullptr)
+        {
+            kd_node* nearest_another = search_kdTree(sph_table, pt, another_subtree);
+            double another_dist = points_distance(sph_table[nearest_another->data], pt);
+            if(another_dist < curr_dist)
             {
                 curr_nearest = nearest_another;
                 curr_dist = another_dist;
                 search_node = curr_nearest->parent;
             }
-            continue;
         }
 
-
-        double search_dist = points_distance(sph_table[search_node->data], pt);
-        if(search_dist < curr_dist)
-        {
-            curr_dist = search_dist;
-            curr_nearest = search_node;
-        }
-
-        search_node = curr_nearest->parent;
+        search_node = search_node->parent;
     }
+
+    return curr_nearest;
 }

@@ -24,4 +24,5 @@ int main(int argc, char* argv[])
     }
 
     kd_node* root = build_kdTree(sph_table, nullptr, vertex_idx);
+    print_kdTree(sph_table, root);
 }
