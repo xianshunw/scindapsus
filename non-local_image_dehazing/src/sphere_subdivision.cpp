@@ -128,36 +128,3 @@ void subdivide(icosahedron& src, polyhedron& dst, int num)
         }
     }
 }
-
-void spherical_coordinates(std::vector<cv::Point3d>& vertex_table, std::vector<cv::Point2d>& sph_table)
-{
-	sph_table.clear();
-    for(int i = 0; i != vertex_table.size(); ++i)
-    {
-        double l = std::sqrt(vertex_table[i].x*vertex_table[i].x + vertex_table[i].y*vertex_table[i].y), 
-            theta, phi;
-        if(vertex_table[i].y > 0.0)
-        {
-            theta = std::acos(vertex_table[i].x/l);
-        }
-
-        if(vertex_table[i].y < 0.0)
-        {
-            theta = 2*CV_PI - std::acos(vertex_table[i].x/l);
-        }
-
-        if(vertex_table[i].x >= 0.0&&vertex_table[i].y == 0.0)
-        {
-            theta = 0.0;
-        }
-
-        if(vertex_table[i].x < 0.0&&vertex_table[i].y == 0.0)
-        {
-            theta = CV_PI;
-        }
-
-        phi = std::acos(vertex_table[i].z);
-
-        sph_table.emplace_back(theta, phi);
-    }
-}

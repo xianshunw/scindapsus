@@ -116,7 +116,7 @@ void destory_kdTree(kd_node* root)
     }
 }
 
-kd_node* search_kdTree(std::vector<cv::Point2d>& sph_table, cv::Point2d pt, kd_node* root)
+kd_node* search_kdTree(const std::vector<cv::Point2d>& sph_table, const cv::Point2d pt, kd_node* root)
 {
     kd_node* curr_nearest = root;
     while(!curr_nearest->is_leaf)
@@ -148,7 +148,7 @@ kd_node* search_kdTree(std::vector<cv::Point2d>& sph_table, cv::Point2d pt, kd_n
     kd_node* search_node = curr_nearest->parent;
 
     //backtrack
-    while(search_node->parent != root->parent)
+    while(search_node != root->parent)
     {
         double search_dist = points_distance(sph_table[search_node->data], pt);
         if(search_dist < curr_dist)
@@ -189,6 +189,7 @@ kd_node* search_kdTree(std::vector<cv::Point2d>& sph_table, cv::Point2d pt, kd_n
                 curr_nearest = nearest_another;
                 curr_dist = another_dist;
                 search_node = curr_nearest->parent;
+                continue;
             }
         }
 
