@@ -2,6 +2,7 @@
 #include "kd_tree.hpp"
 #include <opencv2/imgproc.hpp>
 #include <cmath>
+#include <algorithm>
 
 void calcDarkChannel(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<uchar>& dst, const int s)
 {
@@ -148,13 +149,51 @@ void cluster_img(kd_node* root, const std::vector<cv::Point2d>& sph_table,
     }
 }
 
-void lowBound_delta(const std::vector<std::vector<int>>& cluster_result, const std::vector<double>& r,
-    const cv::Mat& img, std::vector<double>& t_LB, std::vector<double>& delta)
+void lowBound_variance(const std::vector<std::vector<int>>& cluster_result, const std::vector<double>& r,
+    const cv::Mat& img, const cv::Vec3d& A, std::vector<double>& t_estimate, std::vector<double>& variance)
 {
-    t_LB.resize(r.size()); delta.resize(r.size());
+    const cv::Mat img_col = img.reshape(1, img.cols*img.rows);
+    t_estimate.resize(r.size()); variance.resize(r.size());
+    std::vector<double> r_max(r.size(), 0.0);
 
     for(int i = 0; i != cluster_result.size(); ++i)
     {
+        double cluster_rmax = 0.0, cluster_rmean = 0.0;
+        for(int k = 0; k != cluster_result[i].size(); ++k)
+        {
+            if(r[cluster_result[i][k]] > cluster_rmax) cluster_rmax = r[cluster_result[i][k]];
+            cluster_rmean += r[cluster_result[i][k]];
+        }
+        cluster_rmean /= cluster_result[i].size();
 
+        double cluster_variance = 0.0;
+        for(int k = 0; k != cluster_result[i].size(); ++k)
+        {
+            t_estimate[cluster_result[i][k]] = r[cluster_result[i][k]]/cluster_rmax;
+
+            const cv::Vec3b& I = img_col.at<cv::Vec3b>(cluster_result[i][k], 0);
+            double IA[] = { I[0]/A[0], I[1]/A[1], I[2]/A[2] };
+            double t_LB =  IA[0] < IA[1] ? IA[0] : IA[1];
+            if(t_LB > IA[2]) t_LB = IA[2]; t_LB = 1 - t_LB;
+
+            if(t_LB > t_estimate[cluster_result[i][k]]) t_estimate[cluster_result[i][k]] = t_LB;
+
+            cluster_variance += std::pow((r[cluster_result[i][k]] - cluster_rmean), 2);
+        }
+        cluster_variance /= cluster_result[i].size();
+
+        for(int k = 0; k != cluster_result[i].size(); ++k)
+        {
+            variance[cluster_result[i][k]] = cluster_variance;
+        }
+    }
+
+    //salce variance to [0, 1]
+    double max_variance = *std::max_element(variance.begin(), variance.end());
+    if(max_variance == 0.0) return;
+
+    for(int i = 0; i != variance.size(); ++i)
+    {
+        variance[i] /= max_variance;
     }
 }

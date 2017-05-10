@@ -60,5 +60,21 @@ int main(int argc, char* argv[])
     spherical_coordinates(haze_img, img_sph, img_radius, A);
     cluster_img(root, sph_table, img_sph, cluster_result);
 
+    //Estimating Initial Transmission and Regularization
+    std::vector<double> t_estimate, variance;
+    lowBound_variance(cluster_result, img_radius, haze_img, A, t_estimate, variance);
+
+    //show initial transmission
+    cv::Mat_<uchar> t_show(haze_img.size());
+    for(int i = 0; i != t_show.rows; ++i)
+    {
+        for(int j = 0; j != t_show.cols; ++j)
+        {
+            t_show(i, j) = t_estimate[i*t_show.rows + j]*255;
+        }
+    }
+    cv::imshow("t_show", t_show);
+    cv::waitKey();
+
     destory_kdTree(root);
 }

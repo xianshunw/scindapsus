@@ -23,7 +23,7 @@ void cluster_img(kd_node* root, const std::vector<cv::Point2d>& sph_table,
     const std::vector<cv::Point2d>& img_sph, std::vector<std::vector<int>>& cluster_result);
 
 /** @brief calculate the low bound of transmission and standard deviation*/
-void lowBound_delta(const std::vector<std::vector<int>>& cluster_result, const std::vector<double>& r,
-    const cv::Mat& img, std::vector<double>& t_LB, std::vector<double>& delta);
+void lowBound_variance(const std::vector<std::vector<int>>& cluster_result, const std::vector<double>& r,
+    const cv::Mat& img, const cv::Vec3d& A, std::vector<double>& t_estimate, std::vector<double>& variance);
 
 #endif
