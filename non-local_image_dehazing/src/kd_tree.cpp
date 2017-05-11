@@ -145,7 +145,7 @@ kd_node* search_kdTree(const std::vector<cv::Point2d>& sph_table, const cv::Poin
     }
 
     double curr_dist = points_distance(sph_table[curr_nearest->data], pt);
-    kd_node* search_node = curr_nearest->parent;
+    kd_node *search_node = curr_nearest->parent, *pre_node = curr_nearest;
 
     //backtrack
     while(search_node != root->parent)
@@ -153,7 +153,7 @@ kd_node* search_kdTree(const std::vector<cv::Point2d>& sph_table, const cv::Poin
         double search_dist = points_distance(sph_table[search_node->data], pt);
         if(search_dist < curr_dist)
         {
-            kd_node* another_subtree = curr_nearest == search_node->left ? search_node->right :
+            kd_node* another_subtree = pre_node == search_node->left ? search_node->right :
                 search_node->left;
             curr_dist = search_dist;
             curr_nearest = search_node;
@@ -167,18 +167,20 @@ kd_node* search_kdTree(const std::vector<cv::Point2d>& sph_table, const cv::Poin
                 {
                     curr_nearest = nearest_another;
                     curr_dist = another_dist;
+                    pre_node = curr_nearest;
                     search_node = curr_nearest->parent;
                     continue;
                 }
             }
 
+            pre_node = search_node;
             search_node = search_node->parent;
             continue;
         }
 
         double c = search_node->dimension == 0 ? std::abs(pt.x - sph_table[search_node->data].x) :
             std::abs(pt.y - sph_table[search_node->data].y);
-        kd_node* another_subtree = curr_nearest == search_node->left ? search_node->right :
+        kd_node* another_subtree = pre_node == search_node->left ? search_node->right :
                 search_node->left;
         if(c <= curr_dist&&another_subtree != nullptr)
         {
@@ -188,11 +190,13 @@ kd_node* search_kdTree(const std::vector<cv::Point2d>& sph_table, const cv::Poin
             {
                 curr_nearest = nearest_another;
                 curr_dist = another_dist;
+                pre_node = curr_nearest;
                 search_node = curr_nearest->parent;
                 continue;
             }
         }
 
+        pre_node = search_node;
         search_node = search_node->parent;
     }
 
