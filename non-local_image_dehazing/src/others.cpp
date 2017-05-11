@@ -90,6 +90,12 @@ void spherical_coordinates(const std::vector<cv::Point3d>& vertex_table, std::ve
     {
         double l = std::sqrt(vertex_table[i].x*vertex_table[i].x + vertex_table[i].y*vertex_table[i].y), 
             theta, phi;
+        if(l == 0.0)
+        {
+            theta = 0.0; phi = 0.0;
+            sph_table.emplace_back(theta, phi);
+            continue;
+        }
         if(vertex_table[i].y > 0.0)
         {
             theta = std::acos(vertex_table[i].x/l);

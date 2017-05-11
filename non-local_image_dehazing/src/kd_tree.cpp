@@ -167,8 +167,8 @@ kd_node* search_kdTree(const std::vector<cv::Point2d>& sph_table, const cv::Poin
                 {
                     curr_nearest = nearest_another;
                     curr_dist = another_dist;
-                    pre_node = curr_nearest;
-                    search_node = curr_nearest->parent;
+                    pre_node = search_node;
+                    search_node = search_node->parent;
                     continue;
                 }
             }
@@ -190,8 +190,8 @@ kd_node* search_kdTree(const std::vector<cv::Point2d>& sph_table, const cv::Poin
             {
                 curr_nearest = nearest_another;
                 curr_dist = another_dist;
-                pre_node = curr_nearest;
-                search_node = curr_nearest->parent;
+                pre_node = search_node;
+                search_node = search_node->parent;
                 continue;
             }
         }
