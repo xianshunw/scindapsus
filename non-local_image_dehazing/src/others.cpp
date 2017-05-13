@@ -3,6 +3,11 @@
 #include <opencv2/imgproc.hpp>
 #include <cmath>
 #include <algorithm>
+#include <gsl/gsl_spmatrix.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_splinalg.h>
+#include <gsl/gsl_math.h>
+#include <iostream>
 
 void calcDarkChannel(const cv::Mat_<cv::Vec3b>& src, cv::Mat_<uchar>& dst, const int s)
 {
@@ -155,11 +160,10 @@ void cluster_img(kd_node* root, const std::vector<cv::Point2d>& sph_table,
     }
 }
 
-void lowBound_variance(const std::vector<std::vector<int>>& cluster_result, const std::vector<double>& r,
-    const cv::Mat& img, const cv::Vec3d& A, std::vector<double>& t_estimate, std::vector<double>& variance)
+void trans_variance(const std::vector<std::vector<int>>& cluster_result, const std::vector<double>& r,
+    const cv::Vec3d& A, std::vector<double>& t_init, std::vector<double>& variance)
 {
-    const cv::Mat img_col = img.reshape(1, img.cols*img.rows);
-    t_estimate.resize(r.size()); variance.resize(r.size());
+    t_init.resize(r.size()); variance.resize(r.size());
     std::vector<double> r_max(r.size(), 0.0);
 
     for(int i = 0; i != cluster_result.size(); ++i)
@@ -175,14 +179,8 @@ void lowBound_variance(const std::vector<std::vector<int>>& cluster_result, cons
         double cluster_variance = 0.0;
         for(int k = 0; k != cluster_result[i].size(); ++k)
         {
-            t_estimate[cluster_result[i][k]] = r[cluster_result[i][k]]/cluster_rmax;
-
-            const cv::Vec3b& I = img_col.at<cv::Vec3b>(cluster_result[i][k], 0);
-            double IA[] = { I[0]/A[0], I[1]/A[1], I[2]/A[2] };
-            double t_LB =  IA[0] < IA[1] ? IA[0] : IA[1];
-            if(t_LB > IA[2]) t_LB = IA[2]; t_LB = 1 - t_LB;
-
-            if(t_LB > t_estimate[cluster_result[i][k]]) t_estimate[cluster_result[i][k]] = t_LB;
+            if(cluster_rmax == 0.0) t_init[cluster_result[i][k]] = 0;
+            else t_init[cluster_result[i][k]] = r[cluster_result[i][k]]/cluster_rmax;
 
             cluster_variance += std::pow((r[cluster_result[i][k]] - cluster_rmean), 2);
         }
@@ -193,13 +191,98 @@ void lowBound_variance(const std::vector<std::vector<int>>& cluster_result, cons
             variance[cluster_result[i][k]] = cluster_variance;
         }
     }
+}
 
-    //salce variance to [0, 1]
+void regular_trans(const cv::Mat& img, const cv::Vec3d& A, std::vector<double>& t_init,
+    const std::vector<double>& variance, std::vector<double>& t_refine, double lambda)
+{
+    cv::Mat img_col = img.reshape(1, img.cols*img.rows);
+
+    std::vector<double> recip_variance(variance.size());
     double max_variance = *std::max_element(variance.begin(), variance.end());
-    if(max_variance == 0.0) return;
-
     for(int i = 0; i != variance.size(); ++i)
     {
-        variance[i] /= max_variance;
+        recip_variance[i] = variance[i] == 0.0 ? 1.0/max_variance : 1.0/variance[i];
     }
+
+    double max_value = *std::max_element(recip_variance.begin(), recip_variance.end()),
+        min_value = *std::min_element(recip_variance.begin(), recip_variance.end());
+    for(int i = 0; i != variance.size(); ++i)
+    {
+        recip_variance[i] = (recip_variance[i] - min_value)/max_value;
+    }
+
+    //low bound constraint
+    for(int i = 0; i != img_col.rows; ++i)
+    {
+        const cv::Vec3b& pixel = img_col.at<cv::Vec3b>(i, 0);
+        double IA[] = { pixel[0]/A[0], pixel[1]/A[1], pixel[2]/A[2] };
+        if(t_init[i] < IA[0]) t_init[i] = IA[0];
+        if(t_init[i] < IA[1]) t_init[i] = IA[1];
+        if(t_init[i] < IA[2]) t_init[i] = IA[2];
+    }
+
+    gsl_spmatrix *coeff = gsl_spmatrix_alloc_nzmax(img_col.rows, img_col.rows, 5*img_col.rows, GSL_SPMATRIX_TRIPLET);
+    gsl_vector *b = gsl_vector_alloc(img_col.rows), *X = gsl_vector_alloc(img_col.rows);
+    for(int i = 0; i != img.rows; ++i)
+    {
+        for(int j = 0; j != img.cols; ++j)
+        {
+            int idx = i*img.cols + j;
+
+            //existed 4-neighbors
+            std::vector<int> q;
+            if(i - 1 >= 0) q.push_back(idx - img.cols);
+            if(j - 1 >= 0) q.push_back(idx - 1);
+            if(j + 1 < img.cols) q.push_back(idx + 1);
+            if(i + 1 < img.rows) q.push_back(idx + img.cols);
+
+            double temp_value = 0.0;
+            const cv::Vec3b& pixel_idx = img_col.at<cv::Vec3b>(idx, 0);
+            for(int k = 0; k != q.size(); ++k)
+            {
+                const cv::Vec3b& pixel_q = img_col.at<cv::Vec3b>(q[k], 0);
+                double temp_norm = std::sqrt(std::pow(static_cast<double>(pixel_idx[0]) -
+                    static_cast<double>(pixel_q[0]), 2) +
+                    std::pow(static_cast<double>(pixel_idx[1]) - static_cast<double>(pixel_q[1]), 2) +
+                    std::pow(static_cast<double>(pixel_idx[2]) - static_cast<double>(pixel_q[2]), 2));
+                if(temp_norm == 0.0) temp_norm = 1;
+                temp_value += 1/temp_norm;
+
+                gsl_spmatrix_set(coeff, idx, q[k], -4.0*lambda/temp_norm);
+            }
+            temp_value *= (4*lambda);
+
+            gsl_spmatrix_set(coeff, idx, idx, 2*recip_variance[idx] + temp_value);
+            gsl_vector_set(b, idx, 2*recip_variance[idx]*t_init[idx]);
+            gsl_vector_set(X, idx, t_init[idx]);
+        }
+    }
+
+    //sovle the linear equations
+    gsl_spmatrix *C = gsl_spmatrix_ccs(coeff);
+    const double tol = 10e-6;
+    size_t max_iter = 10;
+    const gsl_splinalg_itersolve_type *T = gsl_splinalg_itersolve_gmres;
+    gsl_splinalg_itersolve *work = gsl_splinalg_itersolve_alloc(T, img_col.rows, 0);
+
+    int status, iter = 0; double residual;
+    do
+    {
+        status = gsl_splinalg_itersolve_iterate(C, b, tol, X, work);
+        residual = gsl_splinalg_itersolve_normr(work);
+
+        std::cout << "iter:" << iter << "residual: " << residual <<std::endl;
+    }
+    while(status == GSL_CONTINUE&&++iter < max_iter);
+
+    t_refine.resize(img_col.rows);
+    for(int i = 0; i != t_refine.size(); ++i)
+    {
+        t_refine[i] = gsl_vector_get(X, i);
+    }
+
+    gsl_spmatrix_free(coeff);
+    gsl_vector_free(b);
+    gsl_vector_free(X);
 }

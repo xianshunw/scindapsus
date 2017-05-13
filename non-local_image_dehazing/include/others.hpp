@@ -22,8 +22,12 @@ void spherical_coordinates(const cv::Mat& img, std::vector<cv::Point2d>& img_sph
 void cluster_img(kd_node* root, const std::vector<cv::Point2d>& sph_table,
     const std::vector<cv::Point2d>& img_sph, std::vector<std::vector<int>>& cluster_result);
 
-/** @brief calculate the low bound of transmission and standard deviation*/
-void lowBound_variance(const std::vector<std::vector<int>>& cluster_result, const std::vector<double>& r,
-    const cv::Mat& img, const cv::Vec3d& A, std::vector<double>& t_estimate, std::vector<double>& variance);
+/** @brief estimate initial transmission and variance*/
+void trans_variance(const std::vector<std::vector<int>>& cluster_result, const std::vector<double>& r,
+    const cv::Vec3d& A, std::vector<double>& t_init, std::vector<double>& variance);
+
+/** @brief transmission regularization*/
+void regular_trans(const cv::Mat& img, const cv::Vec3d& A, std::vector<double>& t_init,
+    const std::vector<double>& variance, std::vector<double>& t_refine, double lambda = 0.1);
 
 #endif
