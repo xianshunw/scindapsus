@@ -12,4 +12,4 @@ make
 ```
 After this, an exectable file will generate under `path_of_the_program/bin`
 
-**If you want know more about the details of the program, plz visit [my blog]()**
+**If you want know more about the details of the program, plz visit [my blog](http://www.cnblogs.com/german-iris/p/6874688.html)**
