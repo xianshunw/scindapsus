@@ -20,6 +20,7 @@ struct icosahedron
     icosahedron() { set(1.0); }
     icosahedron(double r) { set(r); }
 
+
     void set(double r);
 
     polyhedron i;

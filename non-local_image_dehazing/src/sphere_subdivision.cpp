@@ -7,10 +7,10 @@ void icosahedron::set(double r)
 {
     i.vertex_table.clear();
     i.plane_table.clear();
-	radius = r;
+    radius = r;
 
     double x = 1.0, z = x*(std::sqrt(5.0) + 1.0)/2, m = std::sqrt(x*x + z*z);
-	x = r*x/m; z = r*z/m;
+    x = r*x/m; z = r*z/m;
     i.vertex_table.emplace_back(-x, 0.0, z);
     i.vertex_table.emplace_back(x, 0.0, z);
     i.vertex_table.emplace_back(-x, 0.0, -z);
