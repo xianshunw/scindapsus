@@ -10,4 +10,4 @@ You can implement the Paper without any code. You also can convert the paper wit
 
 * He K, Sun J, Tang X, et al. Single image haze removal using dark channel prior[C]. computer vision and pattern recognition, 2009: 1956-1963.
 * Berman D, Treibitz T, Avidan S, et al. Non-local Image Dehazing[C]. computer vision and pattern recognition, 2016: 1674-1682.
-* Periaswamy S, Farid H. Differential Elastic Image Registration[J]. Inorganic Chemistry, 2008, 31(19):3994-4001.
+* Periaswamy S, Farid H. Medical Image Registration with Partial Data[J]. Medical Image Analysis, 2006, 10(3): 452-464.
