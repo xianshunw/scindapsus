@@ -9,3 +9,5 @@ Welcome everybody contribute to this project. We don't limit your behavior (code
 * He K, Sun J, Tang X, et al. Single image haze removal using dark channel prior[C]. computer vision and pattern recognition, 2009: 1956-1963.
 * Berman D, Treibitz T, Avidan S, et al. Non-local Image Dehazing[C]. computer vision and pattern recognition, 2016: 1674-1682.
 * Periaswamy S, Farid H. Medical Image Registration with Partial Data[J]. Medical Image Analysis, 2006, 10(3): 452-464.
+
+### 一花独放不是春，万紫千红春满园
