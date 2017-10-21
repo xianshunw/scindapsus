@@ -15,3 +15,7 @@ Then a executable file will generate under `root_of_this_project/bin`. The basic
 ```
 TEST source target
 ```
+
+The finial result is as following:
+
+![result](../data/canvas.jpg)
