@@ -11,7 +11,7 @@ cmake ..
 make
 ```
 
-Then a executable file will generate under `root_of_this_project/bin`. The basic usage of this tool is as following:
+Then a executable file will be generated under `root_of_this_project/bin`. The basic usage of this tool is as following:
 ```
 TEST source target
 ```
