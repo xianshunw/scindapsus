@@ -18,4 +18,4 @@ TEST source target
 
 The finial result is as following:
 
-![result](../data/canvas.jpg)
+![result](./data/canvas.jpg)
