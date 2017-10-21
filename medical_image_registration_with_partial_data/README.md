@@ -2,7 +2,7 @@
 This program is aimed to convert the matlab code of [Medical Image Registration with Partial Data](http://cn.bing.com/academic/profile?id=325daecba3ffa26a7f37f56a28ed066b&encoded=0&v=paper_preview&mkt=zh-cn#) into C/C++. And you can find the matlab code from [here](http://www.cs.dartmouth.edu/farid/)
 
 ## Build
-This code is based on OpenCV only, but you need cmake to build the project. You can use the following command build this project:
+This code is based on OpenCV only, but you need cmake to build the project by using the following command:
 ```
 cd ${root_of_this_project}
 mkdir build
