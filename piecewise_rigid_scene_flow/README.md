@@ -1,3 +1,0 @@
-# 3D Scene Flow Estimation with a Piecewise Rigid Scene Model
-
-This project is aimed to convert the matlab code of [3D Scene Flow Estimation with a Piecewise Rigid Scene Model](http://cn.bing.com/academic/profile?id=0aa1aab49dc0fc20340c0c1103ebf804&encoded=0&v=paper_preview&mkt=zh-cn) into C/C++. You can find the matlab code from [here](https://github.com/vogechri/PRSM). There are some functions that are not opensource. We will implement these functions here.
