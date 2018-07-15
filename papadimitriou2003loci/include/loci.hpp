@@ -42,10 +42,6 @@ private:
         float radii;
 
         bool is_leaf;
-
-        int getCount();
-        int getSquareSum();
-        int getCubicSum();
     };
 
     // insert path 
