@@ -7,8 +7,9 @@ This program is aim to implement the outliers detection algorithm introduced by 
 
 Because some details described in this paper is not very clear (or just because my reading is pool), besides some technical details is hard to implement(may be). Our implementation is a little different.
 
-* we fix $\alpha$ to 0.5, and $l_{\alpha}$ is fixed to 1.
-* we scan all the levels to calculate $MDEF$ and $\hat{\sigma}_{MDEF}$, not from $n_{min}$ to $n_{max}$.
+* we fix ![](http://latex.codecogs.com/gif.latex?\\alpha)
+ to 0.5, and ![](http://latex.codecogs.com/gif.latex?\\l_{\alpha}) is fixed to 1.
+* we scan all the levels to calculate ![](http://latex.codecogs.com/gif.latex?MDEF) and ![](http://latex.codecogs.com/gif.latex?\\hat{\sigma}_{MDEF}), not from ![](http://latex.codecogs.com/gif.latex?\\\n_{min})  to ![](http://latex.codecogs.com/gif.latex?\\\n_{max}).
 * The shifts we used are select randomly from the up and down bound in its corresponding dimension.
 
 ## Build
