@@ -19,6 +19,8 @@ class LOCI
 {
 public:
     LOCI(cv::Mat& _dataset);
+    void setGNum(int g);
+    void setMaxLevel(int l);
     void detect(std::vector<bool>& result);
 private:
     cv::Mat dataset;
@@ -49,7 +51,7 @@ private:
 
     /*
      * Build a k dimension quad-tree using the input dataset
-     * The return value is the vector of the pointers of the non-empty leafs.
+     * The return value is the pointer point to its root
      */
     KQuadTreeNode* buildKQuadTree(float radii, int l, cv::Mat center, KQuadTreeNode* parent);
 

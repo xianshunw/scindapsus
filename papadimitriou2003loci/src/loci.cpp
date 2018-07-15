@@ -29,6 +29,9 @@ LOCI::LOCI(cv::Mat& _dataset)
     }
 }
 
+void LOCI::setGNum(int g) { g_num = g; }
+void LOCI::setMaxLevel(int l) { max_level = l; }
+
 void LOCI::detect(std::vector<bool>& result)
 {
     result.resize(dataset.rows, false);
