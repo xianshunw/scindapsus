@@ -26,5 +26,5 @@ You may also need CMake to compute this program.
 The detect result on our test dataset.
 
 <div align="center">
-<img src="data/res.png" width="400" alt="MACE" />
+<img src="data/res.png" width="400" alt="result" />
 </div>

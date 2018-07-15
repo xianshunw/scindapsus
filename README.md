@@ -1,5 +1,5 @@
 <div align="center">
-<img src="imgs/logo.png" width="400" alt="MACE" />
+<img src="imgs/logo.png" width="400" alt="scindapsus" />
 </div>
 
 # scindapsus
