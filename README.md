@@ -1,5 +1,9 @@
-# reproduction
-Reproduction of Papers, more details are given in the subdirectories.
+<div align="center">
+<img src="imgs/logo.png" width="400" alt="MACE" />
+</div>
+
+# scindapsus
+Reproduction of Papers, more details are given in the subdirectories. We call this program **scindapsus** because scindapsus is a kind of plant that can be transplanted easily.
 
 # How to contribute
 Welcome everyone contribute to this project. We don't limit your behavior (code struction, code style and so on) excepting one point that you must implement the papers in C/C++. Because I hope the project can be used in the industry directly and is compileable on any platform. You can implement the Paper without any code. You also can convert the paper with code but in any other language into C/C++. You can use any open source C/C++ libraries, such as GSL, OpenCV, Eigen.
