@@ -10,11 +10,6 @@ int main(int argc, char** argv)
     cv::Mat dataset;
     loadData(argv[1], dataset);
 
-    // plot data, the type of input of plot tools must be CV_64F
-    cv::Mat data_plot;
-    dataset.convertTo(data_plot, CV_64FC1);
-    cv::Mat data_img;
-
     // plot all the data points
     std::vector<std::pair<float, float>> data_pts;
     for(int i = 0; i != dataset.rows; ++i)
