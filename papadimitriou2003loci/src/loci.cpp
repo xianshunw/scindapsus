@@ -5,8 +5,6 @@
 #include <string>
 #include <random>
 
-#include <iostream>
-
 LOCI::LOCI(cv::Mat& _dataset)
 {
     dataset = _dataset;
@@ -144,6 +142,9 @@ void LOCI::detect(std::vector<bool>& result)
                 S2 += Cj->children[j]->count * Cj->children[j]->count;
                 S3 += Cj->children[j]->count * Cj->children[j]->count * Cj->children[j]->count;
             }
+            S1 += Ci->count * 2;
+            S2 += Ci->count * Ci->count * 4;
+            S3 += Ci->count * Ci->count * Ci->count * 8;
 
             float avg_n = S2 / S1, delta_avg_n = std::sqrt(S3 / S1 - S2 * S2 / (S1 * S1));
             float mdef = 1 - Ci->count / avg_n, delta_mdef = delta_avg_n / avg_n;
