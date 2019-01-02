@@ -341,14 +341,14 @@ void dehaze(cv::Mat& img_scale, cv::Vec3d A, std::vector<double>& t, cv::Mat& ha
     {
         for(int j = 0; j != img_scale.cols; ++j)
         {
-            int idx = i*img_scale.cols + j;;
+            int idx = i*img_scale.cols + j;
             double r = t[idx] < 0.1 ? 0.1 : t[idx], t0 = (img_scale.at<cv::Vec3d>(i, j)[0] - (1 - t[idx])*A[0])/r,
                 t1 = (img_scale.at<cv::Vec3d>(i, j)[1] - (1 - t[idx])*A[1])/r,
                 t2 = (img_scale.at<cv::Vec3d>(i, j)[2] - (1 - t[idx])*A[2])/r;
             
-            haze_free.at<cv::Vec3b>(i, j)[0] = t0 < 0 ? : t0 > 1 ? 255 : t0*255;
-	        haze_free.at<cv::Vec3b>(i, j)[1] = t1 < 0 ? : t1 > 1 ? 255 : t1*255;
-	        haze_free.at<cv::Vec3b>(i, j)[2] = t2 < 0 ? : t2 > 1 ? 255 : t2*255;
+            haze_free.at<cv::Vec3b>(i, j)[0] = t0 < 0 ? 0 : t0 > 1 ? 255 : t0*255;
+	        haze_free.at<cv::Vec3b>(i, j)[1] = t1 < 0 ? 0 : t1 > 1 ? 255 : t1*255;
+	        haze_free.at<cv::Vec3b>(i, j)[2] = t2 < 0 ? 0 : t2 > 1 ? 255 : t2*255;
         }
     }
 }
