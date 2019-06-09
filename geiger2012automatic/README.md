@@ -1,4 +1,4 @@
-#Automatic camera and range sensor calibration using a single shot (**partial implementation**)
+# Automatic camera and range sensor calibration using a single shot (**partial implementation**)
 
 This program is aim to implement the chessboards detection algorithm introduced by this [paper](https://cn.bing.com/academic/profile?id=48bac0b01b22b24028a5e6110335d107&encoded=0&v=paper_preview&mkt=zh-cn)
 
