@@ -13,8 +13,6 @@ We still use CMake to build this program. And you should install the following l
 
 * [**OpenCV**](https://opencv.org/)
 
-You may also need CMake to compute this program.
-
 ## EXAMPLE
 <div align="center">
 <img src="data/results/00.png" width="600" alt="result" />
