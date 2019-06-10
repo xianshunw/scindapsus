@@ -21,5 +21,5 @@ You may also need CMake to compute this program.
 <img src="data/05.png" width="400" alt="org" />
 </div>
 <div align="right">
-<img src="data/results/05.png" width="400" alt="org" />
+<img src="data/results/05.png" width="400" alt="result" />
 </div>
