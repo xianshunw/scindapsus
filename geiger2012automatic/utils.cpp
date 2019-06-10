@@ -54,7 +54,7 @@ void ChessBoardsDetector::filter()
         cv::filter2D(img, img_corners_D, CV_64F, b2, anchor, 0.0, cv::BORDER_CONSTANT);
 
         // compute mean
-        cv::Mat img_corners_mu = (img_corners_A + img_corners_B + img_corners_C + img_corners_D) / 4.0;
+        cv::Mat img_corners_mu = (img_corners_A + img_corners_B + img_corners_C + img_corners_D) / 4.0f;
 
         // case 1: a = white, b = black
         cv::Mat tmp1 = img_corners_A - img_corners_mu, tmp2 = img_corners_B - img_corners_mu;
@@ -113,8 +113,8 @@ void ChessBoardsDetector::refine(int r)
         // continue, if invalid edge orientations
         auto *ptr_v1 = v1.ptr<double>();
         auto *ptr_v2 = v2.ptr<double>();
-        if(ptr_v1[0] == 0.0 && ptr_v1[1] == 0.0 || 
-            ptr_v2[0] == 0.0 && ptr_v2[1] == 0.0)
+        if(ptr_v1[0] == 0.0f && ptr_v1[1] == 0.0f || 
+            ptr_v2[0] == 0.0f && ptr_v2[1] == 0.0f)
         {
             continue;
         }
@@ -297,13 +297,6 @@ void ChessBoardsDetector::chessboardsFromCorners()
             continue;
         }
 
-        // std::cout << i << std::endl;
-
-        //if (i == 137 || i == 121)
-        //{
-        //    int debug_flag = 0;
-        //}
-
         // try growing chessboard
         while(1)
         {
@@ -380,7 +373,7 @@ void ChessBoardsDetector::chessboardsFromCorners()
                     if (!(ptr_overlap[2 * ptr_index[j] + 1] <= chessboardEnergy(boards_index[size_before])))
                     {
                         chessboards.erase(chessboards.begin() + ptr_index[j]);
-                        chessboards.push_back(boards_index[size_before].clone());
+                        chessboards.push_back(boards_index[size_before]);
                         break;
                     }
                     
@@ -402,7 +395,9 @@ ChessBoards ChessBoardsDetector::detect(cv::Mat& _img)
     {
         img = _img.clone();
     }
-    img.convertTo(img, CV_64F, 1.0 / 255.0);
+    img.convertTo(img, CV_64F, 1.0f / 255.0f);
+
+    boards_index.clear();
 
     // compute image derivatives (for principal axes estimation)
     cv::flip(du, du, -1);
@@ -433,7 +428,7 @@ ChessBoards ChessBoardsDetector::detect(cv::Mat& _img)
     std::vector<int> valid_idx;
     for(int i = 0; i != corners.v1.rows; ++i)
     {
-        if(ptr_v1[2 * i] != 0.0 || ptr_v1[2 * i + 1] != 0.0)
+        if(ptr_v1[2 * i] != 0.0f || ptr_v1[2 * i + 1] != 0.0f)
         {
             valid_idx.push_back(i);
         }
@@ -1036,7 +1031,7 @@ double ChessBoardsDetector::chessboardEnergy(cv::Mat& board_index)
     double energy_corners = -board_index.rows * board_index.cols;
 
     // energy: structure
-    double E_structure = 0.0;
+    double E_structure = 0.f;
 
     // walk though rows
     for(int i = 0; i != board_index.rows; ++i)
@@ -1085,7 +1080,7 @@ double ChessBoardsDetector::chessboardEnergy(cv::Mat& board_index)
     }
 
     // final energy
-    double E = energy_corners + 1.0 * board_index.rows * board_index.cols * E_structure;
+    double E = energy_corners + 1.0f * board_index.rows * board_index.cols * E_structure;
 
     return E;
 }
@@ -1237,8 +1232,11 @@ cv::Mat ChessBoardsDetector::growChessboard(cv::Mat &board_index, int border_typ
             p3 = extractPoints(p, index_p3);
             pred = predictCorners(p1, p2, p3);
             idx = assignClosestCorners(cand, pred);
-            org_idx = extractIndex(unused_vec, idx);
-            cv::hconcat(board_index, org_idx.t(), board_index_grow);
+            if (idx.rows * idx.cols != 0)
+            {
+                org_idx = extractIndex(unused_vec, idx);
+                cv::hconcat(board_index, org_idx.t(), board_index_grow);
+            }
             break;
         case 1:
             index_p1 = board_index.row(board_index.rows - 3);
@@ -1249,8 +1247,11 @@ cv::Mat ChessBoardsDetector::growChessboard(cv::Mat &board_index, int border_typ
             p3 = extractPoints(p, index_p3);
             pred = predictCorners(p1, p2, p3);
             idx = assignClosestCorners(cand, pred);
-            org_idx = extractIndex(unused_vec, idx);
-            cv::vconcat(board_index, org_idx, board_index_grow);
+            if (idx.rows * idx.cols != 0)
+            {
+                org_idx = extractIndex(unused_vec, idx);
+                cv::vconcat(board_index, org_idx, board_index_grow);
+            }
             break;
         case 2:
             index_p1 = board_index.col(2);
@@ -1261,8 +1262,11 @@ cv::Mat ChessBoardsDetector::growChessboard(cv::Mat &board_index, int border_typ
             p3 = extractPoints(p, index_p3);
             pred = predictCorners(p1, p2, p3);
             idx = assignClosestCorners(cand, pred);
-            org_idx = extractIndex(unused_vec, idx);
-            cv::hconcat(org_idx.t(), board_index, board_index_grow);
+            if (idx.rows * idx.cols != 0)
+            {
+                org_idx = extractIndex(unused_vec, idx);
+                cv::hconcat(org_idx.t(), board_index, board_index_grow);
+            }
             break;
         case 3:
             index_p1 = board_index.row(2);
@@ -1273,8 +1277,11 @@ cv::Mat ChessBoardsDetector::growChessboard(cv::Mat &board_index, int border_typ
             p3 = extractPoints(p, index_p3);
             pred = predictCorners(p1, p2, p3);
             idx = assignClosestCorners(cand, pred);
-            org_idx = extractIndex(unused_vec, idx);
-            cv::vconcat(org_idx, board_index, board_index_grow);
+            if (idx.rows * idx.cols != 0)
+            {
+                org_idx = extractIndex(unused_vec, idx);
+                cv::vconcat(org_idx, board_index, board_index_grow);
+            }
             break;
     }
 
@@ -1420,4 +1427,9 @@ void ChessBoardsDetector::directionalNeighbor(int idx, cv::Mat v, cv::Mat& board
 
     *neigh = unused_vec[min_idx];
     *dist = min_dist;
+    //*dist = std::numeric_limits<double>::max();
+    //if(min_dist < *dist)
+    //{
+    //    
+    //}
 }
