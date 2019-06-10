@@ -348,12 +348,13 @@ void ChessBoardsDetector::chessboardsFromCorners()
             {
                 auto *ptr_overlap = overlap.ptr<double>(j);
                 int element_size = chessboards[j].rows * chessboards[j].cols;
+                int curr_element_size = boards_index[size_before].rows * boards_index[size_before].cols;
                 auto *ptr_curr_board = boards_index[size_before].ptr<int>();
                 auto *ptr_chessboard_j = chessboards[j].ptr<int>();
                 for (int k = 0; k != element_size; ++k)
                 {
-                    auto iter = std::find(ptr_curr_board, ptr_curr_board + element_size, ptr_chessboard_j[k]);
-                    if (iter != ptr_curr_board + element_size)
+                    auto iter = std::find(ptr_curr_board, ptr_curr_board + curr_element_size, ptr_chessboard_j[k]);
+                    if (iter != ptr_curr_board + curr_element_size)
                     {
                         ptr_overlap[0] = 1;
                         ptr_overlap[1] = chessboardEnergy(chessboards[j]);
@@ -374,20 +375,15 @@ void ChessBoardsDetector::chessboardsFromCorners()
                 int element_num = index.rows * index.cols;
                 auto *ptr_index = index.ptr<int>();
                 auto *ptr_overlap = overlap_f.ptr<double>();
-                bool push_flag = false;
                 for (int j = 0; j != element_num; ++j)
                 {
                     if (!(ptr_overlap[2 * ptr_index[j] + 1] <= chessboardEnergy(boards_index[size_before])))
                     {
                         chessboards.erase(chessboards.begin() + ptr_index[j]);
-                        push_flag = true;
+                        chessboards.push_back(boards_index[size_before].clone());
+                        break;
                     }
                     
-                }
-
-                if (push_flag)
-                {
-                    chessboards.push_back(boards_index[size_before]);
                 }
             }
         }
