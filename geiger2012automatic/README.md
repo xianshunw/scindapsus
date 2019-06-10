@@ -17,5 +17,5 @@ You may also need CMake to compute this program.
 
 ## EXAMPLE
 <div align="center">
-<img src="data/results/00.png" width="400" alt="result" />
+<img src="data/results/00.png" width="600" alt="result" />
 </div>
