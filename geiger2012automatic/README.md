@@ -16,10 +16,6 @@ We still use CMake to build this program. And you should install the following l
 You may also need CMake to compute this program.
 
 ## EXAMPLE
-
-<div align="left">
-<img src="data/05.png" width="400" alt="org" />
-</div>
-<div align="right">
-<img src="data/results/05.png" width="400" alt="result" />
+<div align="center">
+<img src="data/results/00.png" width="400" alt="result" />
 </div>
