@@ -143,7 +143,7 @@ void ChessBoardsDetector::refine(int r)
                 o /= norm(o);
 
                 // robust refinement of orientation
-                if(abs(o.dot(v1)) < 0.25)
+                if(std::abs(o.dot(v1)) < 0.25)
                 {
                     A1.row(0) = A1.row(0) + ptr_du[v * width + u] * (cv::Mat_<double>(1, 2) 
                         << ptr_du[v * width + u], ptr_dv[v * width + u]);
@@ -151,7 +151,7 @@ void ChessBoardsDetector::refine(int r)
                         << ptr_du[v * width + u], ptr_dv[v * width + u]);
                 }
 
-                if(abs(o.dot(v2)) < 0.25)
+                if(std::abs(o.dot(v2)) < 0.25)
                 {
                     A2.row(0) = A2.row(0) + ptr_du[v * width + u] * (cv::Mat_<double>(1, 2) 
                         << ptr_du[v * width + u], ptr_dv[v * width + u]);
@@ -899,6 +899,7 @@ double ChessBoardsDetector::cornerCorrelationScore(cv::Mat& img_sub, cv::Mat& im
         std::atan2(ptr_v1[1], ptr_v1[0]), 
         std::atan2(ptr_v2[1], ptr_v2[0]),
         ptr_c[0] - 1.0);
+
     auto template_patch = createCorrelationPatch(template_class);
 
     // checkerboard responses

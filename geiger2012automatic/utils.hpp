@@ -82,7 +82,7 @@ cv::Mat ChessBoardsDetector::findValue(cv::Mat_<_T>& mat, _T value)
     std::vector<int> index_list;
     for (int i = 0; i != mat.rows; ++i)
     {
-        auto *ptr_mat = mat.ptr<_T>(i);
+        auto *ptr_mat = mat.ptr(i);
         if (ptr_mat[0] == value)
         {
             index_list.push_back(i);
