@@ -17,7 +17,7 @@ struct Corners
 {
     cv::Mat p;
     cv::Mat v1, v2;
-	cv::Mat score;
+    cv::Mat score;
 };
 
 struct ChessBoards
@@ -30,7 +30,7 @@ class ChessBoardsDetector
 {
 public:
     ChessBoardsDetector();
-	ChessBoards detect(cv::Mat& img);
+    ChessBoards detect(cv::Mat& img);
 	
 private:
     int radius[3];
